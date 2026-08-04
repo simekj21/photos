@@ -11,6 +11,7 @@ $allowedTypes = [
     'image/gif' => 'gif',
 ];
 $thumbMaxSize = 400;
+$fullMaxSize = 1920; // Full HD - delsi strana originalu se zmensi na max tuto hodnotu
 
 function json_response($data, int $status = 200): void {
     http_response_code($status);
@@ -33,44 +34,80 @@ function save_photos(string $dataFile, array $photos): bool {
     return $result !== false;
 }
 
-function make_thumbnail(string $sourcePath, string $mimeType, string $destPath, int $maxSize): bool {
+function load_image(string $path, string $mimeType) {
     switch ($mimeType) {
         case 'image/jpeg':
-            $src = @imagecreatefromjpeg($sourcePath);
-            break;
+            return @imagecreatefromjpeg($path);
         case 'image/png':
-            $src = @imagecreatefrompng($sourcePath);
-            break;
+            return @imagecreatefrompng($path);
         case 'image/webp':
-            $src = @imagecreatefromwebp($sourcePath);
-            break;
+            return @imagecreatefromwebp($path);
         case 'image/gif':
-            $src = @imagecreatefromgif($sourcePath);
-            break;
+            return @imagecreatefromgif($path);
         default:
             return false;
     }
+}
+
+function resize_image(string $sourcePath, string $mimeType, int $maxWidth, int $maxHeight, string $destPath, int $quality): bool {
+    $src = load_image($sourcePath, $mimeType);
     if (!$src) {
         return false;
     }
 
     $width = imagesx($src);
     $height = imagesy($src);
-    $scale = min(1, $maxSize / max($width, $height));
-    $thumbWidth = max(1, (int) round($width * $scale));
-    $thumbHeight = max(1, (int) round($height * $scale));
+    $scale = min(1, $maxWidth / $width, $maxHeight / $height);
+    $newWidth = max(1, (int) round($width * $scale));
+    $newHeight = max(1, (int) round($height * $scale));
 
-    $thumb = imagecreatetruecolor($thumbWidth, $thumbHeight);
-    $white = imagecolorallocate($thumb, 255, 255, 255);
-    imagefill($thumb, 0, 0, $white);
-    imagecopyresampled($thumb, $src, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $width, $height);
+    $resized = imagecreatetruecolor($newWidth, $newHeight);
+    if ($mimeType === 'image/png' || $mimeType === 'image/webp') {
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
+    } else {
+        $white = imagecolorallocate($resized, 255, 255, 255);
+        imagefill($resized, 0, 0, $white);
+    }
+    imagecopyresampled($resized, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
-    $ok = imagejpeg($thumb, $destPath, 82);
+    switch ($mimeType) {
+        case 'image/jpeg':
+            $ok = imagejpeg($resized, $destPath, $quality);
+            break;
+        case 'image/webp':
+            $ok = imagewebp($resized, $destPath, $quality);
+            break;
+        case 'image/png':
+            $ok = imagepng($resized, $destPath);
+            break;
+        case 'image/gif':
+            $ok = imagegif($resized, $destPath);
+            break;
+        default:
+            $ok = false;
+    }
 
     imagedestroy($src);
-    imagedestroy($thumb);
+    imagedestroy($resized);
 
     return $ok;
+}
+
+function downscale_if_needed(string $path, string $mimeType, int $maxSize): void {
+    $size = @getimagesize($path);
+    if (!$size) {
+        return;
+    }
+    [$width, $height] = $size;
+    if (max($width, $height) <= $maxSize) {
+        return;
+    }
+    resize_image($path, $mimeType, $maxSize, $maxSize, $path, 88);
+}
+
+function make_thumbnail(string $sourcePath, string $mimeType, string $destPath, int $maxSize): bool {
+    return resize_image($sourcePath, $mimeType, $maxSize, $maxSize, $destPath, 82);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -141,6 +178,8 @@ for ($i = 0; $i < $fileCount; $i++) {
         $errors[] = "$originalName: uložení se nezdařilo";
         continue;
     }
+
+    downscale_if_needed($originalDestPath, $mimeType, $fullMaxSize);
 
     if (!make_thumbnail($originalDestPath, $mimeType, $thumbDestPath, $thumbMaxSize)) {
         copy($originalDestPath, $thumbDestPath);
