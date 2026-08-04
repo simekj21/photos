@@ -117,6 +117,7 @@ body {
 }
 
 .tile {
+  position: relative;
   aspect-ratio: 1;
   border: 0;
   padding: 0;
@@ -131,6 +132,26 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.tile__delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.55);
+  border-color: transparent;
+  color: #fff;
+}
+
+.lightbox__delete {
+  position: absolute;
+  top: 16px;
+  right: 64px;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: transparent;
+  color: #fff;
 }
 
 .lightbox {

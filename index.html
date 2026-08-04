@@ -10,7 +10,7 @@
 <header class="topbar">
   <span class="topbar__title">Galerie</span>
   <div class="topbar__actions">
-    <button id="upload-toggle" class="icon-btn" aria-label="Nahrát fotky" aria-expanded="false">
+    <button id="admin-toggle" class="icon-btn" aria-label="Administrátorský režim" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
     </button>
     <button id="theme-toggle" class="icon-btn" aria-label="Přepnout tmavý režim">
@@ -33,6 +33,9 @@
 <div id="lightbox" class="lightbox" hidden>
   <button id="lb-close" class="icon-btn lightbox__close" aria-label="Zavřít">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <button id="lb-delete" class="icon-btn lightbox__delete" aria-label="Smazat fotku" hidden>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>
   </button>
   <button id="lb-prev" class="icon-btn lightbox__nav lightbox__nav--prev" aria-label="Předchozí">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>

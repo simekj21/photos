@@ -2,6 +2,7 @@
   "use strict";
 
   var THEME_KEY = "theme";
+  var adminMode = false;
 
   function initTheme() {
     var saved = localStorage.getItem(THEME_KEY);
@@ -42,24 +43,70 @@
     var fragment = document.createDocumentFragment();
 
     photos.forEach(function (photo, index) {
-      var tile = document.createElement("button");
+      var tile = document.createElement("div");
       tile.className = "tile";
-      tile.setAttribute("aria-label", "Otevřít fotku " + (index + 1));
+
+      var openBtn = document.createElement("button");
+      openBtn.className = "tile__open";
+      openBtn.style.cssText = "position:absolute; inset:0; width:100%; height:100%; border:0; padding:0; background:transparent; cursor:pointer;";
+      openBtn.setAttribute("aria-label", "Otevřít fotku " + (index + 1));
 
       var img = document.createElement("img");
       img.src = photo.thumbUrl;
       img.loading = "lazy";
       img.alt = "";
-      tile.appendChild(img);
+      openBtn.appendChild(img);
 
-      tile.addEventListener("click", function () {
+      openBtn.addEventListener("click", function () {
         openLightbox(photos, index);
       });
+
+      tile.appendChild(openBtn);
+
+      if (adminMode) {
+        var deleteBtn = document.createElement("button");
+        deleteBtn.className = "icon-btn tile__delete";
+        deleteBtn.setAttribute("aria-label", "Smazat fotku " + (index + 1));
+        deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
+        deleteBtn.addEventListener("click", function (event) {
+          event.stopPropagation();
+          deletePhoto(photo.id);
+        });
+        tile.appendChild(deleteBtn);
+      }
 
       fragment.appendChild(tile);
     });
 
     gallery.appendChild(fragment);
+  }
+
+  function deletePhoto(id) {
+    if (!window.confirm("Opravdu smazat tuto fotku?")) return;
+
+    fetch("api/delete.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: id }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (result.ok) {
+          if (!document.getElementById("lightbox").hidden) {
+            closeLightbox();
+          }
+          loadPhotos();
+        } else {
+          window.alert("Smazání se nezdařilo: " + (result.data.error || "neznámá chyba"));
+        }
+      })
+      .catch(function () {
+        window.alert("Smazání se nezdařilo. Zkuste to prosím znovu.");
+      });
   }
 
   var lightboxState = { photos: [], index: 0 };
@@ -68,6 +115,7 @@
     lightboxState.photos = photos;
     lightboxState.index = index;
     updateLightboxImage();
+    document.getElementById("lb-delete").hidden = !adminMode;
     document.getElementById("lightbox").hidden = false;
     document.body.style.overflow = "hidden";
   }
@@ -96,6 +144,10 @@
     document.getElementById("lb-close").addEventListener("click", closeLightbox);
     document.getElementById("lb-next").addEventListener("click", showNext);
     document.getElementById("lb-prev").addEventListener("click", showPrev);
+    document.getElementById("lb-delete").addEventListener("click", function () {
+      var photo = lightboxState.photos[lightboxState.index];
+      deletePhoto(photo.id);
+    });
 
     document.getElementById("lightbox").addEventListener("click", function (event) {
       if (event.target.id === "lightbox") {
@@ -189,11 +241,12 @@
       }
     });
 
-    var uploadToggle = document.getElementById("upload-toggle");
-    uploadToggle.addEventListener("click", function () {
-      var isHidden = dropzone.hidden;
-      dropzone.hidden = !isHidden;
-      uploadToggle.setAttribute("aria-expanded", String(isHidden));
+    var adminToggle = document.getElementById("admin-toggle");
+    adminToggle.addEventListener("click", function () {
+      adminMode = !adminMode;
+      dropzone.hidden = !adminMode;
+      adminToggle.setAttribute("aria-expanded", String(adminMode));
+      renderGallery(currentPhotos);
     });
   }
 
