@@ -1,11 +1,2 @@
-# lokalni konfigurace s realnymi udaji k DB - na hostingu se uklada rucne
-api/config.php
-
-# nahrane fotky - zustavaji jen na hostingu, negenerujeme je do repozitare
-uploads/originals/*
-uploads/thumbs/*
-!uploads/originals/.gitkeep
-!uploads/thumbs/.gitkeep
-
 # lokalni nastaveni editoru / claude
 .claude/settings.local.json

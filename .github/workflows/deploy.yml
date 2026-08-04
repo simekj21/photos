@@ -23,8 +23,3 @@ jobs:
             **/.git*
             **/.git*/**
             **/.github/**
-            api/config.php
-            api/config.php.example
-            uploads/originals/**
-            uploads/thumbs/**
-            README.md
