@@ -28,8 +28,9 @@ function load_photos(string $dataFile): array {
     return is_array($decoded) ? $decoded : [];
 }
 
-function save_photos(string $dataFile, array $photos): void {
-    file_put_contents($dataFile, json_encode($photos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+function save_photos(string $dataFile, array $photos): bool {
+    $result = @file_put_contents($dataFile, json_encode($photos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    return $result !== false;
 }
 
 function make_thumbnail(string $sourcePath, string $mimeType, string $destPath, int $maxSize): bool {
@@ -162,7 +163,17 @@ for ($i = 0; $i < $fileCount; $i++) {
 }
 
 if (!empty($uploaded)) {
-    save_photos($dataFile, $photos);
+    $dataDir = dirname($dataFile);
+    if (!is_dir($dataDir)) {
+        @mkdir($dataDir, 0775, true);
+    }
+    if (!save_photos($dataFile, $photos)) {
+        json_response([
+            'error' => "Fotky se nahrály, ale zápis do $dataFile selhal (zkontrolujte oprávnění složky data/ na hostingu)",
+            'uploaded' => [],
+            'errors' => $errors,
+        ], 500);
+    }
 }
 
 if (empty($uploaded) && !empty($errors)) {
