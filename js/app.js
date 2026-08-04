@@ -3,6 +3,7 @@
 
   var THEME_KEY = "theme";
   var adminMode = false;
+  var selectedIds = new Set();
 
   function initTheme() {
     var saved = localStorage.getItem(THEME_KEY);
@@ -64,6 +65,23 @@
       tile.appendChild(openBtn);
 
       if (adminMode) {
+        if (selectedIds.has(photo.id)) {
+          tile.classList.add("tile--selected");
+        }
+
+        var checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "tile__select";
+        checkbox.setAttribute("aria-label", "Vybrat fotku " + (index + 1));
+        checkbox.checked = selectedIds.has(photo.id);
+        checkbox.addEventListener("click", function (event) {
+          event.stopPropagation();
+        });
+        checkbox.addEventListener("change", function () {
+          toggleSelect(photo.id, tile);
+        });
+        tile.appendChild(checkbox);
+
         var deleteBtn = document.createElement("button");
         deleteBtn.className = "icon-btn tile__delete";
         deleteBtn.setAttribute("aria-label", "Smazat fotku " + (index + 1));
@@ -79,6 +97,60 @@
     });
 
     gallery.appendChild(fragment);
+  }
+
+  function toggleSelect(id, tile) {
+    if (selectedIds.has(id)) {
+      selectedIds.delete(id);
+      tile.classList.remove("tile--selected");
+    } else {
+      selectedIds.add(id);
+      tile.classList.add("tile--selected");
+    }
+    updateBulkActions();
+  }
+
+  function clearSelection() {
+    selectedIds.clear();
+    updateBulkActions();
+    renderGallery(currentPhotos);
+  }
+
+  function updateBulkActions() {
+    var bar = document.getElementById("bulk-actions");
+    var count = selectedIds.size;
+    bar.hidden = count === 0;
+    document.getElementById("bulk-count").textContent =
+      count + " " + (count === 1 ? "vybraná fotka" : count < 5 ? "vybrané fotky" : "vybraných fotek");
+  }
+
+  function bulkDeletePhotos() {
+    var ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm("Opravdu smazat " + ids.length + " fotek?")) return;
+
+    fetch("api/delete.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: ids }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (result.ok) {
+          selectedIds.clear();
+          updateBulkActions();
+          loadPhotos();
+        } else {
+          window.alert("Smazání se nezdařilo: " + (result.data.error || "neznámá chyba"));
+        }
+      })
+      .catch(function () {
+        window.alert("Smazání se nezdařilo. Zkuste to prosím znovu.");
+      });
   }
 
   function deletePhoto(id) {
@@ -246,8 +318,15 @@
       adminMode = !adminMode;
       dropzone.hidden = !adminMode;
       adminToggle.setAttribute("aria-expanded", String(adminMode));
+      if (!adminMode) {
+        selectedIds.clear();
+        updateBulkActions();
+      }
       renderGallery(currentPhotos);
     });
+
+    document.getElementById("bulk-clear").addEventListener("click", clearSelection);
+    document.getElementById("bulk-delete").addEventListener("click", bulkDeletePhotos);
   }
 
   document.addEventListener("DOMContentLoaded", function () {

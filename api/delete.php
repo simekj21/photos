@@ -18,10 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-$id = $input['id'] ?? ($_POST['id'] ?? null);
+$ids = $input['ids'] ?? null;
+if (!is_array($ids)) {
+    $singleId = $input['id'] ?? ($_POST['id'] ?? null);
+    $ids = $singleId ? [$singleId] : [];
+}
+$ids = array_values(array_unique(array_filter($ids)));
 
-if (!$id) {
-    json_response(['error' => 'Chybí id fotky'], 400);
+if (empty($ids)) {
+    json_response(['error' => 'Chybí id fotky/fotek'], 400);
 }
 
 if (!file_exists($dataFile)) {
@@ -33,34 +38,34 @@ if (!is_array($photos)) {
     $photos = [];
 }
 
-$index = null;
-foreach ($photos as $i => $photo) {
-    if (($photo['id'] ?? null) === $id) {
-        $index = $i;
-        break;
+$idsToDelete = array_flip($ids);
+$deleted = [];
+$remaining = [];
+
+foreach ($photos as $photo) {
+    $photoId = $photo['id'] ?? null;
+    if ($photoId !== null && isset($idsToDelete[$photoId])) {
+        foreach (['originalUrl', 'thumbUrl'] as $key) {
+            if (!empty($photo[$key])) {
+                $path = $root . '/' . $photo[$key];
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+        $deleted[] = $photoId;
+    } else {
+        $remaining[] = $photo;
     }
 }
 
-if ($index === null) {
+if (empty($deleted)) {
     json_response(['error' => 'Fotka nenalezena'], 404);
 }
 
-$photo = $photos[$index];
-
-foreach (['originalUrl', 'thumbUrl'] as $key) {
-    if (!empty($photo[$key])) {
-        $path = $root . '/' . $photo[$key];
-        if (is_file($path)) {
-            @unlink($path);
-        }
-    }
-}
-
-array_splice($photos, $index, 1);
-
-$result = @file_put_contents($dataFile, json_encode($photos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+$result = @file_put_contents($dataFile, json_encode($remaining, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 if ($result === false) {
     json_response(['error' => 'Zápis do data/photos.json selhal'], 500);
 }
 
-json_response(['deleted' => $id]);
+json_response(['deleted' => $deleted]);

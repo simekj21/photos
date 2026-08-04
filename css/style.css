@@ -103,6 +103,33 @@ body {
   border-color: var(--text-muted);
 }
 
+.btn--danger {
+  color: #b3261e;
+  border-color: #b3261e;
+}
+
+.btn--danger:hover {
+  background: #b3261e;
+  color: #fff;
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 24px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.bulk-actions__count {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -143,6 +170,21 @@ body {
   background: rgba(0, 0, 0, 0.55);
   border-color: transparent;
   color: #fff;
+}
+
+.tile--selected {
+  outline: 3px solid #378ada;
+  outline-offset: -3px;
+}
+
+.tile__select {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  cursor: pointer;
 }
 
 .lightbox__delete {
