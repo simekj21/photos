@@ -188,6 +188,13 @@
         uploadFiles(event.dataTransfer.files);
       }
     });
+
+    var uploadToggle = document.getElementById("upload-toggle");
+    uploadToggle.addEventListener("click", function () {
+      var isHidden = dropzone.hidden;
+      dropzone.hidden = !isHidden;
+      uploadToggle.setAttribute("aria-expanded", String(isHidden));
+    });
   }
 
   document.addEventListener("DOMContentLoaded", function () {

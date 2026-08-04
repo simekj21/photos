@@ -9,14 +9,19 @@
 <body>
 <header class="topbar">
   <span class="topbar__title">Galerie</span>
-  <button id="theme-toggle" class="icon-btn" aria-label="Přepnout tmavý režim">
-    <svg id="theme-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-    </svg>
-  </button>
+  <div class="topbar__actions">
+    <button id="upload-toggle" class="icon-btn" aria-label="Nahrát fotky" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    </button>
+    <button id="theme-toggle" class="icon-btn" aria-label="Přepnout tmavý režim">
+      <svg id="theme-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
 </header>
 
-<div id="dropzone" class="dropzone">
+<div id="dropzone" class="dropzone" hidden>
   <p class="dropzone__text">Přetáhněte sem fotky, nebo</p>
   <button id="pick-files" class="btn">vybrat fotky</button>
   <input id="file-input" type="file" accept="image/*" multiple hidden>
