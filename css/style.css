@@ -35,9 +35,20 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.topbar__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .topbar__title {
   font-size: 18px;
   font-weight: 600;
+}
+
+.topbar__count {
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
 .topbar__actions {

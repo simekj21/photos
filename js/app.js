@@ -23,6 +23,12 @@
 
   var currentPhotos = [];
 
+  function pluralizePhotos(count) {
+    if (count === 1) return count + " fotka";
+    if (count >= 2 && count <= 4) return count + " fotky";
+    return count + " fotek";
+  }
+
   function loadPhotos() {
     return fetch("api/photos.php", { cache: "no-store" })
       .then(function (res) {
@@ -31,10 +37,12 @@
       })
       .then(function (photos) {
         currentPhotos = photos;
+        document.getElementById("photo-count").textContent = pluralizePhotos(photos.length);
         renderGallery(photos);
       })
       .catch(function () {
         document.getElementById("gallery").innerHTML = "";
+        document.getElementById("photo-count").textContent = "";
       });
   }
 
