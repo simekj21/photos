@@ -22,7 +22,7 @@
   var currentPhotos = [];
 
   function loadPhotos() {
-    return fetch("api/photos.php")
+    return fetch("api/photos.php", { cache: "no-store" })
       .then(function (res) {
         if (!res.ok) throw new Error("Nepodařilo se načíst fotky");
         return res.json();
