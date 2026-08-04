@@ -391,7 +391,8 @@
       chip.type = "button";
       chip.className = "tag-chip" + (activeFilterTagIds.has(tag.id) ? " tag-chip--active" : "");
       chip.textContent = tag.name;
-      chip.addEventListener("click", function () {
+      chip.addEventListener("click", function (event) {
+        event.stopPropagation();
         if (activeFilterTagIds.has(tag.id)) {
           activeFilterTagIds.delete(tag.id);
         } else {
