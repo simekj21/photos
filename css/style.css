@@ -124,6 +124,10 @@ body {
   background: var(--surface);
 }
 
+.bulk-actions[hidden] {
+  display: none;
+}
+
 .bulk-actions__count {
   font-size: 14px;
   color: var(--text-muted);
