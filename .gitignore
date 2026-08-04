@@ -7,3 +7,4 @@ uploads/thumbs/*
 !uploads/originals/.gitkeep
 !uploads/thumbs/.gitkeep
 data/photos.json
+data/tags.json

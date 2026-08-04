@@ -124,6 +124,156 @@ body {
   color: #fff;
 }
 
+.btn--primary {
+  background: #378ada;
+  border-color: #378ada;
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: #2c6fb0;
+  border-color: #2c6fb0;
+}
+
+.icon-btn--active {
+  border-color: #378ada;
+  color: #378ada;
+}
+
+.admin-tools {
+  margin: 16px 24px 0;
+}
+
+.admin-tools[hidden] {
+  display: none;
+}
+
+.filter-wrap {
+  position: relative;
+}
+
+.filter-panel {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  min-width: 220px;
+  max-width: 280px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+}
+
+.filter-panel[hidden] {
+  display: none;
+}
+
+.filter-panel__empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.filter-panel .btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.tag-chip:hover {
+  border-color: var(--text-muted);
+}
+
+.tag-chip--active {
+  background: #378ada;
+  border-color: #378ada;
+  color: #fff;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+  padding: 16px;
+  z-index: 200;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal__panel {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.modal__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal__row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.tag-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-manager-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .bulk-actions {
   display: flex;
   align-items: center;

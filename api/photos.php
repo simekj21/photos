@@ -22,4 +22,9 @@ usort($photos, function ($a, $b) {
     return strcmp($b['uploadedAt'] ?? '', $a['uploadedAt'] ?? '');
 });
 
+foreach ($photos as &$photo) {
+    $photo['tagIds'] = $photo['tagIds'] ?? [];
+}
+unset($photo);
+
 echo json_encode($photos, JSON_UNESCAPED_UNICODE);

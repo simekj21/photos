@@ -4,6 +4,9 @@
   var THEME_KEY = "theme";
   var adminMode = false;
   var selectedIds = new Set();
+  var allTags = [];
+  var activeFilterTagIds = new Set();
+  var tagPickerSelection = new Set();
 
   function initTheme() {
     var saved = localStorage.getItem(THEME_KEY);
@@ -38,12 +41,41 @@
       .then(function (photos) {
         currentPhotos = photos;
         document.getElementById("photo-count").textContent = pluralizePhotos(photos.length);
-        renderGallery(photos);
+        refreshDisplay();
       })
       .catch(function () {
         document.getElementById("gallery").innerHTML = "";
         document.getElementById("photo-count").textContent = "";
       });
+  }
+
+  function loadTags() {
+    return fetch("api/tags.php", { cache: "no-store" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Nepodařilo se načíst tagy");
+        return res.json();
+      })
+      .then(function (tags) {
+        allTags = tags;
+        renderFilterChips();
+      })
+      .catch(function () {
+        allTags = [];
+        renderFilterChips();
+      });
+  }
+
+  function getFilteredPhotos() {
+    if (activeFilterTagIds.size === 0) return currentPhotos;
+    return currentPhotos.filter(function (photo) {
+      return (photo.tagIds || []).some(function (id) {
+        return activeFilterTagIds.has(id);
+      });
+    });
+  }
+
+  function refreshDisplay() {
+    renderGallery(getFilteredPhotos());
   }
 
   function renderGallery(photos) {
@@ -121,7 +153,7 @@
   function clearSelection() {
     selectedIds.clear();
     updateBulkActions();
-    renderGallery(currentPhotos);
+    refreshDisplay();
   }
 
   function updateBulkActions() {
@@ -236,10 +268,17 @@
     });
 
     document.addEventListener("keydown", function (event) {
-      if (document.getElementById("lightbox").hidden) return;
-      if (event.key === "Escape") closeLightbox();
-      if (event.key === "ArrowRight") showNext();
-      if (event.key === "ArrowLeft") showPrev();
+      if (event.key !== "Escape") {
+        if (!document.getElementById("lightbox").hidden) {
+          if (event.key === "ArrowRight") showNext();
+          if (event.key === "ArrowLeft") showPrev();
+        }
+        return;
+      }
+      if (!document.getElementById("lightbox").hidden) closeLightbox();
+      if (!document.getElementById("tag-picker").hidden) closeTagPicker();
+      if (!document.getElementById("tag-manager").hidden) closeTagManager();
+      if (!document.getElementById("filter-panel").hidden) document.getElementById("filter-panel").hidden = true;
     });
   }
 
@@ -322,19 +361,295 @@
     });
 
     var adminToggle = document.getElementById("admin-toggle");
+    var adminTools = document.getElementById("admin-tools");
     adminToggle.addEventListener("click", function () {
       adminMode = !adminMode;
       dropzone.hidden = !adminMode;
+      adminTools.hidden = !adminMode;
       adminToggle.setAttribute("aria-expanded", String(adminMode));
       if (!adminMode) {
         selectedIds.clear();
         updateBulkActions();
       }
-      renderGallery(currentPhotos);
+      refreshDisplay();
     });
 
     document.getElementById("bulk-clear").addEventListener("click", clearSelection);
     document.getElementById("bulk-delete").addEventListener("click", bulkDeletePhotos);
+    document.getElementById("bulk-tag").addEventListener("click", openTagPicker);
+    document.getElementById("manage-tags-btn").addEventListener("click", openTagManager);
+  }
+
+  function renderFilterChips() {
+    var container = document.getElementById("filter-tags");
+    var empty = document.getElementById("filter-empty");
+    container.innerHTML = "";
+    empty.hidden = allTags.length > 0;
+
+    allTags.forEach(function (tag) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tag-chip" + (activeFilterTagIds.has(tag.id) ? " tag-chip--active" : "");
+      chip.textContent = tag.name;
+      chip.addEventListener("click", function () {
+        if (activeFilterTagIds.has(tag.id)) {
+          activeFilterTagIds.delete(tag.id);
+        } else {
+          activeFilterTagIds.add(tag.id);
+        }
+        document.getElementById("filter-toggle").classList.toggle("icon-btn--active", activeFilterTagIds.size > 0);
+        renderFilterChips();
+        refreshDisplay();
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function initFilter() {
+    var filterToggle = document.getElementById("filter-toggle");
+    var filterPanel = document.getElementById("filter-panel");
+
+    filterToggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      var willOpen = filterPanel.hidden;
+      filterPanel.hidden = !willOpen;
+      filterToggle.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!filterPanel.hidden && !filterPanel.contains(event.target) && event.target !== filterToggle) {
+        filterPanel.hidden = true;
+        filterToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    document.getElementById("filter-clear").addEventListener("click", function () {
+      activeFilterTagIds.clear();
+      filterToggle.classList.remove("icon-btn--active");
+      renderFilterChips();
+      refreshDisplay();
+    });
+  }
+
+  function renderTagPickerChips() {
+    var container = document.getElementById("tag-picker-list");
+    var empty = document.getElementById("tag-picker-empty");
+    container.innerHTML = "";
+    empty.hidden = allTags.length > 0;
+
+    allTags.forEach(function (tag) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tag-chip" + (tagPickerSelection.has(tag.id) ? " tag-chip--active" : "");
+      chip.textContent = tag.name;
+      chip.addEventListener("click", function () {
+        if (tagPickerSelection.has(tag.id)) {
+          tagPickerSelection.delete(tag.id);
+        } else {
+          tagPickerSelection.add(tag.id);
+        }
+        renderTagPickerChips();
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function openTagPicker() {
+    tagPickerSelection = new Set();
+    renderTagPickerChips();
+    document.getElementById("tag-picker-input").value = "";
+    document.getElementById("tag-picker").hidden = false;
+  }
+
+  function closeTagPicker() {
+    document.getElementById("tag-picker").hidden = true;
+  }
+
+  function createTag(name) {
+    return fetch("api/tags.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create", name: name }),
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        return { ok: res.ok, data: data };
+      });
+    });
+  }
+
+  function initTagPicker() {
+    document.getElementById("tag-picker-cancel").addEventListener("click", closeTagPicker);
+
+    document.getElementById("tag-picker").addEventListener("click", function (event) {
+      if (event.target.id === "tag-picker") closeTagPicker();
+    });
+
+    document.getElementById("tag-picker-add").addEventListener("click", function () {
+      var input = document.getElementById("tag-picker-input");
+      var name = input.value.trim();
+      if (!name) return;
+
+      createTag(name).then(function (result) {
+        if (!result.ok) {
+          window.alert("Vytvoření tagu selhalo: " + (result.data.error || "neznámá chyba"));
+          return;
+        }
+        allTags.push(result.data);
+        tagPickerSelection.add(result.data.id);
+        renderTagPickerChips();
+        renderFilterChips();
+        input.value = "";
+      });
+    });
+
+    document.getElementById("tag-picker-apply").addEventListener("click", function () {
+      var tagIds = Array.from(tagPickerSelection);
+      if (tagIds.length === 0) {
+        window.alert("Vyberte alespoň jeden tag.");
+        return;
+      }
+
+      fetch("api/photo-tags.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoIds: Array.from(selectedIds), tagIds: tagIds }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            window.alert("Přiřazení tagů selhalo: " + (result.data.error || "neznámá chyba"));
+            return;
+          }
+          closeTagPicker();
+          selectedIds.clear();
+          updateBulkActions();
+          loadPhotos();
+        })
+        .catch(function () {
+          window.alert("Přiřazení tagů selhalo. Zkuste to prosím znovu.");
+        });
+    });
+  }
+
+  function renderTagManagerList() {
+    var container = document.getElementById("tag-manager-list");
+    var empty = document.getElementById("tag-manager-empty");
+    container.innerHTML = "";
+    empty.hidden = allTags.length > 0;
+
+    allTags.forEach(function (tag) {
+      var row = document.createElement("div");
+      row.className = "tag-manager-row";
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.className = "input";
+      input.value = tag.name;
+
+      var saveBtn = document.createElement("button");
+      saveBtn.className = "icon-btn";
+      saveBtn.setAttribute("aria-label", "Uložit název tagu");
+      saveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>';
+      saveBtn.addEventListener("click", function () {
+        var newName = input.value.trim();
+        if (!newName || newName === tag.name) return;
+
+        fetch("api/tags.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "rename", id: tag.id, name: newName }),
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data };
+            });
+          })
+          .then(function (result) {
+            if (!result.ok) {
+              window.alert("Přejmenování selhalo: " + (result.data.error || "neznámá chyba"));
+              return;
+            }
+            tag.name = newName;
+            renderFilterChips();
+          });
+      });
+
+      var deleteBtn = document.createElement("button");
+      deleteBtn.className = "icon-btn";
+      deleteBtn.setAttribute("aria-label", "Smazat tag " + tag.name);
+      deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
+      deleteBtn.addEventListener("click", function () {
+        if (!window.confirm('Opravdu smazat tag "' + tag.name + '"? Odebere se ze všech fotek.')) return;
+
+        fetch("api/tags.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "delete", id: tag.id }),
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data };
+            });
+          })
+          .then(function (result) {
+            if (!result.ok) {
+              window.alert("Smazání tagu selhalo: " + (result.data.error || "neznámá chyba"));
+              return;
+            }
+            allTags = allTags.filter(function (t) {
+              return t.id !== tag.id;
+            });
+            activeFilterTagIds.delete(tag.id);
+            renderTagManagerList();
+            renderFilterChips();
+            loadPhotos();
+          });
+      });
+
+      row.appendChild(input);
+      row.appendChild(saveBtn);
+      row.appendChild(deleteBtn);
+      container.appendChild(row);
+    });
+  }
+
+  function openTagManager() {
+    renderTagManagerList();
+    document.getElementById("tag-manager-input").value = "";
+    document.getElementById("tag-manager").hidden = false;
+  }
+
+  function closeTagManager() {
+    document.getElementById("tag-manager").hidden = true;
+  }
+
+  function initTagManager() {
+    document.getElementById("tag-manager-close").addEventListener("click", closeTagManager);
+
+    document.getElementById("tag-manager").addEventListener("click", function (event) {
+      if (event.target.id === "tag-manager") closeTagManager();
+    });
+
+    document.getElementById("tag-manager-add").addEventListener("click", function () {
+      var input = document.getElementById("tag-manager-input");
+      var name = input.value.trim();
+      if (!name) return;
+
+      createTag(name).then(function (result) {
+        if (!result.ok) {
+          window.alert("Vytvoření tagu selhalo: " + (result.data.error || "neznámá chyba"));
+          return;
+        }
+        allTags.push(result.data);
+        renderTagManagerList();
+        renderFilterChips();
+        input.value = "";
+      });
+    });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -342,6 +657,10 @@
     document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
     initLightboxControls();
     initUpload();
+    initFilter();
+    initTagPicker();
+    initTagManager();
     loadPhotos();
+    loadTags();
   });
 })();

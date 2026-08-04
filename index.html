@@ -13,6 +13,16 @@
     <span id="photo-count" class="topbar__count"></span>
   </div>
   <div class="topbar__actions">
+    <div class="filter-wrap">
+      <button id="filter-toggle" class="icon-btn" aria-label="Filtrovat podle tagů" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg>
+      </button>
+      <div id="filter-panel" class="filter-panel" hidden>
+        <div id="filter-tags" class="tag-chips"></div>
+        <p id="filter-empty" class="filter-panel__empty" hidden>Zatím žádné tagy.</p>
+        <button id="filter-clear" class="btn">zrušit filtr</button>
+      </div>
+    </div>
     <button id="admin-toggle" class="icon-btn" aria-label="Administrátorský režim" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -31,8 +41,13 @@
   <p id="upload-status" class="dropzone__status"></p>
 </div>
 
+<div id="admin-tools" class="admin-tools" hidden>
+  <button id="manage-tags-btn" class="btn">spravovat tagy</button>
+</div>
+
 <div id="bulk-actions" class="bulk-actions" hidden>
   <span id="bulk-count" class="bulk-actions__count"></span>
+  <button id="bulk-tag" class="btn">přidat tagy</button>
   <button id="bulk-clear" class="btn">zrušit výběr</button>
   <button id="bulk-delete" class="btn btn--danger">smazat vybrané</button>
 </div>
@@ -53,6 +68,37 @@
   <button id="lb-next" class="icon-btn lightbox__nav lightbox__nav--next" aria-label="Další">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
   </button>
+</div>
+
+<div id="tag-picker" class="modal" hidden>
+  <div class="modal__panel">
+    <h2 class="modal__title">Přidat tagy vybraným fotkám</h2>
+    <div id="tag-picker-list" class="tag-chips"></div>
+    <p id="tag-picker-empty" class="filter-panel__empty" hidden>Zatím žádné tagy - vytvořte první níže.</p>
+    <div class="modal__row">
+      <input id="tag-picker-input" type="text" placeholder="Nový tag" class="input">
+      <button id="tag-picker-add" class="btn">vytvořit tag</button>
+    </div>
+    <div class="modal__actions">
+      <button id="tag-picker-cancel" class="btn">zrušit</button>
+      <button id="tag-picker-apply" class="btn btn--primary">použít</button>
+    </div>
+  </div>
+</div>
+
+<div id="tag-manager" class="modal" hidden>
+  <div class="modal__panel">
+    <h2 class="modal__title">Správa tagů</h2>
+    <div id="tag-manager-list" class="tag-manager-list"></div>
+    <p id="tag-manager-empty" class="filter-panel__empty" hidden>Zatím žádné tagy.</p>
+    <div class="modal__row">
+      <input id="tag-manager-input" type="text" placeholder="Nový tag" class="input">
+      <button id="tag-manager-add" class="btn">přidat</button>
+    </div>
+    <div class="modal__actions">
+      <button id="tag-manager-close" class="btn">zavřít</button>
+    </div>
+  </div>
 </div>
 
 <script src="js/app.js?v=__BUILD__"></script>

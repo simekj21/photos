@@ -28,3 +28,4 @@ jobs:
             uploads/originals/**
             uploads/thumbs/**
             data/photos.json
+            data/tags.json
