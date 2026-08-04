@@ -12,6 +12,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Inject cache-busting build version
+        run: sed -i "s/__BUILD__/${{ github.sha }}/g" index.html
+
       - name: FTP deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
