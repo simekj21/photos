@@ -16,6 +16,13 @@
   </button>
 </header>
 
+<div id="dropzone" class="dropzone">
+  <p class="dropzone__text">Přetáhněte sem fotky, nebo</p>
+  <button id="pick-files" class="btn">vybrat fotky</button>
+  <input id="file-input" type="file" accept="image/*" multiple hidden>
+  <p id="upload-status" class="dropzone__status"></p>
+</div>
+
 <main id="gallery" class="gallery"></main>
 
 <div id="lightbox" class="lightbox" hidden>

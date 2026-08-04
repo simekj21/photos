@@ -22,3 +22,6 @@ jobs:
           exclude: |
             **/.git/**
             **/.github/**
+            uploads/originals/**
+            uploads/thumbs/**
+            data/photos.json

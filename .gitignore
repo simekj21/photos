@@ -1,2 +1,9 @@
 # lokalni nastaveni editoru / claude
 .claude/settings.local.json
+
+# nahrane fotky a data o nich - existuji jen na serveru
+uploads/originals/*
+uploads/thumbs/*
+!uploads/originals/.gitkeep
+!uploads/thumbs/.gitkeep
+data/photos.json

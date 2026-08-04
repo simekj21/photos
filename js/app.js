@@ -19,21 +19,26 @@
     setTheme(current === "dark" ? "light" : "dark");
   }
 
-  // Docasna demo data - az bude hotove API (api/photos.php), nahradi se fetch()em.
-  function getDemoPhotos() {
-    var photos = [];
-    for (var i = 1; i <= 24; i++) {
-      photos.push({
-        id: i,
-        thumbUrl: "https://picsum.photos/seed/photo" + i + "/400/400",
-        fullUrl: "https://picsum.photos/seed/photo" + i + "/1600/1600",
+  var currentPhotos = [];
+
+  function loadPhotos() {
+    return fetch("api/photos.php")
+      .then(function (res) {
+        if (!res.ok) throw new Error("Nepodařilo se načíst fotky");
+        return res.json();
+      })
+      .then(function (photos) {
+        currentPhotos = photos;
+        renderGallery(photos);
+      })
+      .catch(function () {
+        document.getElementById("gallery").innerHTML = "";
       });
-    }
-    return photos;
   }
 
   function renderGallery(photos) {
     var gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
     var fragment = document.createDocumentFragment();
 
     photos.forEach(function (photo, index) {
@@ -84,7 +89,7 @@
 
   function updateLightboxImage() {
     var photo = lightboxState.photos[lightboxState.index];
-    document.getElementById("lb-image").src = photo.fullUrl;
+    document.getElementById("lb-image").src = photo.originalUrl;
   }
 
   function initLightboxControls() {
@@ -106,10 +111,90 @@
     });
   }
 
+  function setUploadStatus(text) {
+    document.getElementById("upload-status").textContent = text;
+  }
+
+  function uploadFiles(fileList) {
+    var files = Array.prototype.filter.call(fileList, function (file) {
+      return file.type.indexOf("image/") === 0;
+    });
+
+    if (files.length === 0) {
+      setUploadStatus("Vyberte prosím obrázky.");
+      return;
+    }
+
+    var formData = new FormData();
+    files.forEach(function (file) {
+      formData.append("photos[]", file);
+    });
+
+    setUploadStatus("Nahrávám " + files.length + " " + (files.length === 1 ? "fotku" : "fotek") + "...");
+
+    fetch("api/upload.php", { method: "POST", body: formData })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        var uploadedCount = (result.data.uploaded || []).length;
+        var errorCount = (result.data.errors || []).length;
+
+        if (uploadedCount > 0) {
+          setUploadStatus("Nahráno: " + uploadedCount + (errorCount ? ", chyby: " + errorCount : ""));
+          loadPhotos();
+        } else {
+          setUploadStatus("Nahrávání se nezdařilo: " + (result.data.error || "neznámá chyba"));
+        }
+      })
+      .catch(function () {
+        setUploadStatus("Nahrávání se nezdařilo. Zkuste to prosím znovu.");
+      });
+  }
+
+  function initUpload() {
+    var dropzone = document.getElementById("dropzone");
+    var fileInput = document.getElementById("file-input");
+
+    document.getElementById("pick-files").addEventListener("click", function () {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", function () {
+      if (fileInput.files.length > 0) {
+        uploadFiles(fileInput.files);
+        fileInput.value = "";
+      }
+    });
+
+    ["dragenter", "dragover"].forEach(function (eventName) {
+      dropzone.addEventListener(eventName, function (event) {
+        event.preventDefault();
+        dropzone.classList.add("dropzone--active");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(function (eventName) {
+      dropzone.addEventListener(eventName, function (event) {
+        event.preventDefault();
+        dropzone.classList.remove("dropzone--active");
+      });
+    });
+
+    dropzone.addEventListener("drop", function (event) {
+      if (event.dataTransfer.files.length > 0) {
+        uploadFiles(event.dataTransfer.files);
+      }
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
     initLightboxControls();
-    renderGallery(getDemoPhotos());
+    initUpload();
+    loadPhotos();
   });
 })();
