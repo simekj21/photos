@@ -54,6 +54,7 @@
 
 <div id="admin-tools" class="admin-tools" hidden>
   <button id="manage-tags-btn" class="btn">spravovat tagy</button>
+  <button id="import-btn" class="btn">nahrát z adresáře</button>
 </div>
 
 <div id="bulk-actions" class="bulk-actions" hidden>
@@ -94,6 +95,34 @@
     <div class="modal__actions">
       <button id="tag-picker-cancel" class="btn">zrušit</button>
       <button id="tag-picker-apply" class="btn btn--primary">použít</button>
+    </div>
+  </div>
+</div>
+
+<div id="incoming-picker" class="modal" hidden>
+  <div class="modal__panel">
+    <h2 class="modal__title">Import fotek z adresáře</h2>
+    <div id="incoming-list" class="events-list"></div>
+    <p id="incoming-empty" class="filter-panel__empty" hidden>Ve složce actions/ nejsou žádné podadresáře s fotkami.</p>
+
+    <div id="incoming-event-section" class="form-field" hidden>
+      <span class="form-field__label">Akce</span>
+      <div class="radio-row">
+        <label><input type="radio" name="incoming-event-mode" value="new" checked> nová akce</label>
+        <label><input type="radio" name="incoming-event-mode" value="existing"> existující akce</label>
+        <label><input type="radio" name="incoming-event-mode" value="none"> bez akce</label>
+      </div>
+      <input id="incoming-event-name" type="text" class="input" placeholder="Název akce">
+      <input id="incoming-event-start" type="date" class="input">
+      <div id="incoming-event-existing" class="tag-chips" hidden></div>
+      <p id="incoming-event-existing-empty" class="filter-panel__empty" hidden>Zatím žádné akce.</p>
+    </div>
+
+    <p id="incoming-status" class="form-error" hidden></p>
+
+    <div class="modal__actions">
+      <button id="incoming-cancel" class="btn">zrušit</button>
+      <button id="incoming-import" class="btn btn--primary">importovat</button>
     </div>
   </div>
 </div>

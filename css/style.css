@@ -162,6 +162,10 @@ body {
   display: none;
 }
 
+.form-status--ok {
+  color: #2e7d32;
+}
+
 #admin-pin-input {
   width: 100%;
   margin-top: 4px;

@@ -13,6 +13,9 @@
   var activeEventFilterId = null;
   var eventPickerSelectedId = null;
   var editingEventId = null;
+  var incomingFolders = [];
+  var selectedIncomingFolder = null;
+  var incomingExistingEventId = null;
 
   function initTheme() {
     var saved = localStorage.getItem(THEME_KEY);
@@ -407,6 +410,7 @@
       if (!document.getElementById("event-editor").hidden) closeEventEditor();
       if (!document.getElementById("events-panel").hidden) document.getElementById("events-panel").hidden = true;
       if (!document.getElementById("admin-login").hidden) closeAdminLogin();
+      if (!document.getElementById("incoming-picker").hidden) closeIncomingPicker();
     });
   }
 
@@ -1050,6 +1054,169 @@
     });
   }
 
+  function loadIncomingFolders() {
+    return adminFetch("api/incoming.php", { cache: "no-store" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Nepodařilo se načíst složky");
+        return res.json();
+      })
+      .then(function (folders) {
+        incomingFolders = folders;
+        renderIncomingList();
+      })
+      .catch(function () {
+        incomingFolders = [];
+        renderIncomingList();
+      });
+  }
+
+  function renderIncomingList() {
+    var container = document.getElementById("incoming-list");
+    var empty = document.getElementById("incoming-empty");
+    container.innerHTML = "";
+    empty.hidden = incomingFolders.length > 0;
+
+    incomingFolders.forEach(function (folder) {
+      var row = document.createElement("div");
+      row.className = "event-row";
+
+      var selectBtn = document.createElement("button");
+      selectBtn.type = "button";
+      selectBtn.className =
+        "event-row__select" + (selectedIncomingFolder === folder.name ? " event-row__select--active" : "");
+      selectBtn.innerHTML = '<span class="event-row__name"></span><span class="event-row__dates"></span>';
+      selectBtn.querySelector(".event-row__name").textContent = folder.name;
+      selectBtn.querySelector(".event-row__dates").textContent = folder.count + " fotek";
+      selectBtn.addEventListener("click", function () {
+        selectedIncomingFolder = folder.name;
+        document.getElementById("incoming-event-name").value = folder.name;
+        document.getElementById("incoming-event-section").hidden = false;
+        renderIncomingList();
+      });
+      row.appendChild(selectBtn);
+      container.appendChild(row);
+    });
+  }
+
+  function renderIncomingExistingEvents() {
+    var container = document.getElementById("incoming-event-existing");
+    var empty = document.getElementById("incoming-event-existing-empty");
+    container.innerHTML = "";
+    empty.hidden = allEvents.length > 0;
+
+    allEvents.forEach(function (evt) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tag-chip" + (incomingExistingEventId === evt.id ? " tag-chip--active" : "");
+      chip.textContent = evt.name;
+      chip.addEventListener("click", function () {
+        incomingExistingEventId = incomingExistingEventId === evt.id ? null : evt.id;
+        renderIncomingExistingEvents();
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function updateIncomingEventModeVisibility() {
+    var mode = document.querySelector('input[name="incoming-event-mode"]:checked').value;
+    document.getElementById("incoming-event-name").hidden = mode !== "new";
+    document.getElementById("incoming-event-start").hidden = mode !== "new";
+    document.getElementById("incoming-event-existing").hidden = mode !== "existing";
+    document.getElementById("incoming-event-existing-empty").hidden = mode !== "existing" || allEvents.length > 0;
+  }
+
+  function openIncomingPicker() {
+    selectedIncomingFolder = null;
+    incomingExistingEventId = null;
+    document.getElementById("incoming-event-section").hidden = true;
+    document.getElementById("incoming-event-name").value = "";
+    document.getElementById("incoming-event-start").value = new Date().toISOString().slice(0, 10);
+    document.querySelector('input[name="incoming-event-mode"][value="new"]').checked = true;
+    document.getElementById("incoming-status").hidden = true;
+    renderIncomingExistingEvents();
+    updateIncomingEventModeVisibility();
+    document.getElementById("incoming-picker").hidden = false;
+    loadIncomingFolders();
+  }
+
+  function closeIncomingPicker() {
+    document.getElementById("incoming-picker").hidden = true;
+  }
+
+  function submitIncomingImport() {
+    if (!selectedIncomingFolder) {
+      window.alert("Vyberte složku k importu.");
+      return;
+    }
+
+    var eventMode = document.querySelector('input[name="incoming-event-mode"]:checked').value;
+    var payload = { folder: selectedIncomingFolder, eventMode: eventMode };
+
+    if (eventMode === "new") {
+      payload.eventName = document.getElementById("incoming-event-name").value.trim();
+      payload.eventStartDate = document.getElementById("incoming-event-start").value;
+      if (!payload.eventName || !payload.eventStartDate) {
+        window.alert("Vyplňte prosím název a datum nové akce.");
+        return;
+      }
+    } else if (eventMode === "existing") {
+      if (!incomingExistingEventId) {
+        window.alert("Vyberte existující akci.");
+        return;
+      }
+      payload.eventId = incomingExistingEventId;
+    }
+
+    var statusEl = document.getElementById("incoming-status");
+    statusEl.hidden = false;
+    statusEl.className = "form-error";
+    statusEl.textContent = "Importuji...";
+
+    adminFetch("api/import-incoming.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          statusEl.className = "form-error";
+          statusEl.textContent = result.data.error || "Import selhal";
+          return;
+        }
+        statusEl.className = "form-error form-status--ok";
+        statusEl.textContent =
+          "Importováno: " +
+          result.data.imported +
+          (result.data.skipped.length ? ", přeskočeno: " + result.data.skipped.length : "");
+        selectedIncomingFolder = null;
+        document.getElementById("incoming-event-section").hidden = true;
+        loadIncomingFolders();
+        loadEvents();
+        loadPhotos();
+      })
+      .catch(function () {
+        statusEl.className = "form-error";
+        statusEl.textContent = "Import selhal. Zkuste to prosím znovu.";
+      });
+  }
+
+  function initIncomingPicker() {
+    document.getElementById("import-btn").addEventListener("click", openIncomingPicker);
+    document.getElementById("incoming-cancel").addEventListener("click", closeIncomingPicker);
+    document.getElementById("incoming-import").addEventListener("click", submitIncomingImport);
+    document.getElementById("incoming-picker").addEventListener("click", function (event) {
+      if (event.target.id === "incoming-picker") closeIncomingPicker();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="incoming-event-mode"]'), function (radio) {
+      radio.addEventListener("change", updateIncomingEventModeVisibility);
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
@@ -1062,6 +1229,7 @@
     initEventEditor();
     initEventPicker();
     initAdminLogin();
+    initIncomingPicker();
     loadPhotos();
     loadTags();
     loadEvents();

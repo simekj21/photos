@@ -27,6 +27,7 @@ jobs:
             **/.github/**
             uploads/originals/**
             uploads/thumbs/**
+            actions/**
             data/photos.json
             data/tags.json
             data/events.json
