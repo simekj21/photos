@@ -1091,6 +1091,7 @@
         selectedIncomingFolder = folder.name;
         document.getElementById("incoming-event-name").value = folder.name;
         document.getElementById("incoming-event-section").hidden = false;
+        setIncomingImportButtonState(false);
         renderIncomingList();
       });
       row.appendChild(selectBtn);
@@ -1125,6 +1126,12 @@
     document.getElementById("incoming-event-existing-empty").hidden = mode !== "existing" || allEvents.length > 0;
   }
 
+  function setIncomingImportButtonState(succeeded) {
+    var btn = document.getElementById("incoming-import");
+    btn.textContent = succeeded ? "zavřít" : "importovat";
+    btn.dataset.done = succeeded ? "1" : "";
+  }
+
   function openIncomingPicker() {
     selectedIncomingFolder = null;
     incomingExistingEventId = null;
@@ -1133,6 +1140,7 @@
     document.getElementById("incoming-event-start").value = new Date().toISOString().slice(0, 10);
     document.querySelector('input[name="incoming-event-mode"][value="new"]').checked = true;
     document.getElementById("incoming-status").hidden = true;
+    setIncomingImportButtonState(false);
     renderIncomingExistingEvents();
     updateIncomingEventModeVisibility();
     document.getElementById("incoming-picker").hidden = false;
@@ -1195,6 +1203,7 @@
           (result.data.skipped.length ? ", přeskočeno: " + result.data.skipped.length : "");
         selectedIncomingFolder = null;
         document.getElementById("incoming-event-section").hidden = true;
+        setIncomingImportButtonState(true);
         loadIncomingFolders();
         loadEvents();
         loadPhotos();
@@ -1208,7 +1217,13 @@
   function initIncomingPicker() {
     document.getElementById("import-btn").addEventListener("click", openIncomingPicker);
     document.getElementById("incoming-cancel").addEventListener("click", closeIncomingPicker);
-    document.getElementById("incoming-import").addEventListener("click", submitIncomingImport);
+    document.getElementById("incoming-import").addEventListener("click", function () {
+      if (document.getElementById("incoming-import").dataset.done === "1") {
+        closeIncomingPicker();
+        return;
+      }
+      submitIncomingImport();
+    });
     document.getElementById("incoming-picker").addEventListener("click", function (event) {
       if (event.target.id === "incoming-picker") closeIncomingPicker();
     });
