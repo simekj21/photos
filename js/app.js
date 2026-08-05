@@ -99,6 +99,12 @@
       openBtn.appendChild(img);
 
       openBtn.addEventListener("click", function () {
+        if (adminMode) {
+          toggleSelect(photo.id, tile);
+          var cb = tile.querySelector(".tile__select");
+          if (cb) cb.checked = selectedIds.has(photo.id);
+          return;
+        }
         openLightbox(photos, index);
       });
 
