@@ -2,6 +2,7 @@
   "use strict";
 
   var THEME_KEY = "theme";
+  var TILE_SIZE_KEY = "tileSize";
   var ADMIN_TOKEN_KEY = "adminToken";
   var adminMode = false;
   var adminToken = localStorage.getItem(ADMIN_TOKEN_KEY) || null;
@@ -47,6 +48,23 @@
     });
   }
 
+  function getDefaultTileSize() {
+    return parseInt(getComputedStyle(document.documentElement).getPropertyValue("--tile-size"), 10) || 140;
+  }
+
+  function applyTileSize(px) {
+    document.documentElement.style.setProperty("--tile-size", px + "px");
+  }
+
+  function applySavedTileSize() {
+    var saved = localStorage.getItem(TILE_SIZE_KEY);
+    if (saved) {
+      applyTileSize(parseInt(saved, 10));
+    } else {
+      document.documentElement.style.removeProperty("--tile-size");
+    }
+  }
+
   function enterAdminMode() {
     adminMode = true;
     document.getElementById("dropzone").hidden = false;
@@ -55,6 +73,9 @@
     document.getElementById("admin-toggle").setAttribute("aria-expanded", "true");
     document.getElementById("events-toggle").classList.add("icon-btn--admin-hint");
     document.getElementById("events-add-btn").hidden = false;
+    document.getElementById("tile-size-toggle").disabled = true;
+    document.getElementById("tile-size-panel").hidden = true;
+    document.documentElement.style.removeProperty("--tile-size");
     refreshDisplay();
     renderEventsList();
   }
@@ -67,6 +88,8 @@
     document.getElementById("admin-toggle").setAttribute("aria-expanded", "false");
     document.getElementById("events-toggle").classList.remove("icon-btn--admin-hint");
     document.getElementById("events-add-btn").hidden = true;
+    document.getElementById("tile-size-toggle").disabled = false;
+    applySavedTileSize();
     selectedIds.clear();
     updateBulkActions();
     refreshDisplay();
@@ -411,6 +434,10 @@
       if (!document.getElementById("events-panel").hidden) document.getElementById("events-panel").hidden = true;
       if (!document.getElementById("admin-login").hidden) closeAdminLogin();
       if (!document.getElementById("incoming-picker").hidden) closeIncomingPicker();
+      if (!document.getElementById("tile-size-panel").hidden) {
+        document.getElementById("tile-size-panel").hidden = true;
+        document.getElementById("tile-size-toggle").setAttribute("aria-expanded", "false");
+      }
     });
   }
 
@@ -560,6 +587,44 @@
       filterToggle.classList.remove("icon-btn--active");
       renderFilterChips();
       refreshDisplay();
+    });
+  }
+
+  function initTileSize() {
+    var toggle = document.getElementById("tile-size-toggle");
+    var panel = document.getElementById("tile-size-panel");
+    var slider = document.getElementById("tile-size-slider");
+
+    var defaultSize = getDefaultTileSize();
+    slider.max = String(defaultSize);
+
+    var saved = localStorage.getItem(TILE_SIZE_KEY);
+    if (saved) {
+      var value = Math.min(parseInt(saved, 10), defaultSize);
+      slider.value = String(value);
+      applyTileSize(value);
+    } else {
+      slider.value = String(defaultSize);
+    }
+
+    slider.addEventListener("input", function () {
+      var value = parseInt(slider.value, 10);
+      localStorage.setItem(TILE_SIZE_KEY, String(value));
+      applyTileSize(value);
+    });
+
+    toggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      var willOpen = panel.hidden;
+      panel.hidden = !willOpen;
+      toggle.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!panel.hidden && !panel.contains(event.target) && event.target !== toggle) {
+        panel.hidden = true;
+        toggle.setAttribute("aria-expanded", "false");
+      }
     });
   }
 
@@ -1238,6 +1303,7 @@
     initLightboxControls();
     initUpload();
     initFilter();
+    initTileSize();
     initTagPicker();
     initTagManager();
     initEventsPanel();
