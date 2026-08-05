@@ -502,9 +502,14 @@ body {
   position: absolute;
   top: 16px;
   right: 64px;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: transparent;
+  background: rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+}
+
+.lightbox__delete:hover {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .lightbox {
@@ -531,9 +536,14 @@ body {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: transparent;
+  background: rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+}
+
+.lightbox__close:hover {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .lightbox__nav {
@@ -542,9 +552,14 @@ body {
   transform: translateY(-50%);
   width: 44px;
   height: 44px;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: transparent;
+  background: rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+}
+
+.lightbox__nav:hover {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .lightbox__nav--prev {
