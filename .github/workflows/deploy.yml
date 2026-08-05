@@ -29,3 +29,4 @@ jobs:
             uploads/thumbs/**
             data/photos.json
             data/tags.json
+            data/events.json

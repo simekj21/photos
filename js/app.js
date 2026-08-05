@@ -2,7 +2,9 @@
   "use strict";
 
   var THEME_KEY = "theme";
+  var ADMIN_TOKEN_KEY = "adminToken";
   var adminMode = false;
+  var adminToken = localStorage.getItem(ADMIN_TOKEN_KEY) || null;
   var selectedIds = new Set();
   var allTags = [];
   var activeFilterTagIds = new Set();
@@ -26,6 +28,99 @@
   function toggleTheme() {
     var current = document.documentElement.getAttribute("data-theme");
     setTheme(current === "dark" ? "light" : "dark");
+  }
+
+  function adminFetch(url, options) {
+    options = options || {};
+    options.headers = Object.assign({}, options.headers, adminToken ? { "X-Admin-Token": adminToken } : {});
+    return fetch(url, options).then(function (res) {
+      if (res.status === 401) {
+        adminToken = null;
+        localStorage.removeItem(ADMIN_TOKEN_KEY);
+        exitAdminMode();
+        window.alert("Přihlášení do administrace vypršelo. Zadejte PIN znovu.");
+      }
+      return res;
+    });
+  }
+
+  function enterAdminMode() {
+    adminMode = true;
+    document.getElementById("dropzone").hidden = false;
+    document.getElementById("admin-tools").hidden = false;
+    document.getElementById("admin-toggle").classList.add("icon-btn--admin-on");
+    document.getElementById("admin-toggle").setAttribute("aria-expanded", "true");
+    document.getElementById("events-toggle").classList.add("icon-btn--admin-hint");
+    document.getElementById("events-add-btn").hidden = false;
+    refreshDisplay();
+    renderEventsList();
+  }
+
+  function exitAdminMode() {
+    adminMode = false;
+    document.getElementById("dropzone").hidden = true;
+    document.getElementById("admin-tools").hidden = true;
+    document.getElementById("admin-toggle").classList.remove("icon-btn--admin-on");
+    document.getElementById("admin-toggle").setAttribute("aria-expanded", "false");
+    document.getElementById("events-toggle").classList.remove("icon-btn--admin-hint");
+    document.getElementById("events-add-btn").hidden = true;
+    selectedIds.clear();
+    updateBulkActions();
+    refreshDisplay();
+    renderEventsList();
+  }
+
+  function openAdminLogin() {
+    document.getElementById("admin-pin-input").value = "";
+    document.getElementById("admin-pin-error").hidden = true;
+    document.getElementById("admin-login").hidden = false;
+    document.getElementById("admin-pin-input").focus();
+  }
+
+  function closeAdminLogin() {
+    document.getElementById("admin-login").hidden = true;
+  }
+
+  function submitAdminPin() {
+    var pin = document.getElementById("admin-pin-input").value.trim();
+    if (!pin) return;
+
+    fetch("api/auth.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: pin }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          document.getElementById("admin-pin-error").textContent = result.data.error || "Nesprávný PIN";
+          document.getElementById("admin-pin-error").hidden = false;
+          return;
+        }
+        adminToken = result.data.token;
+        localStorage.setItem(ADMIN_TOKEN_KEY, adminToken);
+        closeAdminLogin();
+        enterAdminMode();
+      })
+      .catch(function () {
+        document.getElementById("admin-pin-error").textContent = "Ověření selhalo. Zkuste to prosím znovu.";
+        document.getElementById("admin-pin-error").hidden = false;
+      });
+  }
+
+  function initAdminLogin() {
+    document.getElementById("admin-pin-cancel").addEventListener("click", closeAdminLogin);
+    document.getElementById("admin-pin-submit").addEventListener("click", submitAdminPin);
+    document.getElementById("admin-login").addEventListener("click", function (event) {
+      if (event.target.id === "admin-login") closeAdminLogin();
+    });
+    document.getElementById("admin-pin-input").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") submitAdminPin();
+    });
   }
 
   var currentPhotos = [];
@@ -198,7 +293,7 @@
     if (ids.length === 0) return;
     if (!window.confirm("Opravdu smazat " + ids.length + " fotek?")) return;
 
-    fetch("api/delete.php", {
+    adminFetch("api/delete.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: ids }),
@@ -225,7 +320,7 @@
   function deletePhoto(id) {
     if (!window.confirm("Opravdu smazat tuto fotku?")) return;
 
-    fetch("api/delete.php", {
+    adminFetch("api/delete.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: id }),
@@ -311,6 +406,7 @@
       if (!document.getElementById("event-picker").hidden) closeEventPicker();
       if (!document.getElementById("event-editor").hidden) closeEventEditor();
       if (!document.getElementById("events-panel").hidden) document.getElementById("events-panel").hidden = true;
+      if (!document.getElementById("admin-login").hidden) closeAdminLogin();
     });
   }
 
@@ -335,7 +431,7 @@
 
     setUploadStatus("Nahrávám " + files.length + " " + (files.length === 1 ? "fotku" : "fotek") + "...");
 
-    fetch("api/upload.php", { method: "POST", body: formData })
+    adminFetch("api/upload.php", { method: "POST", body: formData })
       .then(function (res) {
         return res.json().then(function (data) {
           return { ok: res.ok, data: data };
@@ -393,21 +489,16 @@
     });
 
     var adminToggle = document.getElementById("admin-toggle");
-    var adminTools = document.getElementById("admin-tools");
     adminToggle.addEventListener("click", function () {
-      adminMode = !adminMode;
-      dropzone.hidden = !adminMode;
-      adminTools.hidden = !adminMode;
-      adminToggle.classList.toggle("icon-btn--admin-on", adminMode);
-      document.getElementById("events-toggle").classList.toggle("icon-btn--admin-hint", adminMode);
-      adminToggle.setAttribute("aria-expanded", String(adminMode));
-      document.getElementById("events-add-btn").hidden = !adminMode;
-      if (!adminMode) {
-        selectedIds.clear();
-        updateBulkActions();
+      if (adminMode) {
+        exitAdminMode();
+        return;
       }
-      refreshDisplay();
-      renderEventsList();
+      if (adminToken) {
+        enterAdminMode();
+      } else {
+        openAdminLogin();
+      }
     });
 
     document.getElementById("bulk-clear").addEventListener("click", clearSelection);
@@ -503,7 +594,7 @@
   }
 
   function createTag(name) {
-    return fetch("api/tags.php", {
+    return adminFetch("api/tags.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "create", name: name }),
@@ -546,7 +637,7 @@
         return;
       }
 
-      fetch("api/photo-tags.php", {
+      adminFetch("api/photo-tags.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ photoIds: Array.from(selectedIds), tagIds: tagIds }),
@@ -595,7 +686,7 @@
         var newName = input.value.trim();
         if (!newName || newName === tag.name) return;
 
-        fetch("api/tags.php", {
+        adminFetch("api/tags.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "rename", id: tag.id, name: newName }),
@@ -622,7 +713,7 @@
       deleteBtn.addEventListener("click", function () {
         if (!window.confirm('Opravdu smazat tag "' + tag.name + '"? Odebere se ze všech fotek.')) return;
 
-        fetch("api/tags.php", {
+        adminFetch("api/tags.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "delete", id: tag.id }),
@@ -761,7 +852,7 @@
   function deleteEvent(id) {
     if (!window.confirm("Opravdu smazat tuto akci? Fotky o ni přijdou.")) return;
 
-    fetch("api/events.php", {
+    adminFetch("api/events.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "delete", id: id }),
@@ -832,7 +923,7 @@
       endDate: document.getElementById("event-end").value,
     };
 
-    fetch("api/events.php", {
+    adminFetch("api/events.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -908,7 +999,7 @@
         return;
       }
 
-      fetch("api/photo-events.php", {
+      adminFetch("api/photo-events.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ photoIds: Array.from(selectedIds), eventId: eventPickerSelectedId }),
@@ -970,6 +1061,7 @@
     initEventsPanel();
     initEventEditor();
     initEventPicker();
+    initAdminLogin();
     loadPhotos();
     loadTags();
     loadEvents();

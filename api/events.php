@@ -78,6 +78,9 @@ if ($method !== 'POST') {
     json_response(['error' => 'Metoda není povolena'], 405);
 }
 
+require __DIR__ . '/auth-guard.php';
+require_admin();
+
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? 'create';
 $events = load_events($eventsFile);

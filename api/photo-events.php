@@ -16,6 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['error' => 'Metoda není povolena'], 405);
 }
 
+require __DIR__ . '/auth-guard.php';
+require_admin();
+
 $input = json_decode(file_get_contents('php://input'), true);
 $photoIds = $input['photoIds'] ?? [];
 $eventId = array_key_exists('eventId', $input) ? $input['eventId'] : false;

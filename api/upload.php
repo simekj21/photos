@@ -114,6 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['error' => 'Metoda není povolena'], 405);
 }
 
+require __DIR__ . '/auth-guard.php';
+require_admin();
+
 if (empty($_FILES['photos'])) {
     json_response(['error' => 'Nebyly nahrány žádné soubory'], 400);
 }

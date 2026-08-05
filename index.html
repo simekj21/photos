@@ -98,6 +98,18 @@
   </div>
 </div>
 
+<div id="admin-login" class="modal" hidden>
+  <div class="modal__panel">
+    <h2 class="modal__title">Zadejte PIN</h2>
+    <input id="admin-pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="input" placeholder="••••">
+    <p id="admin-pin-error" class="form-error" hidden></p>
+    <div class="modal__actions">
+      <button id="admin-pin-cancel" class="btn">zrušit</button>
+      <button id="admin-pin-submit" class="btn btn--primary">potvrdit</button>
+    </div>
+  </div>
+</div>
+
 <div id="event-picker" class="modal" hidden>
   <div class="modal__panel">
     <h2 class="modal__title">Přiřadit akci vybraným fotkám</h2>
