@@ -140,6 +140,18 @@ body {
   color: #378ada;
 }
 
+.icon-btn--admin-on {
+  background: #c62828;
+  border-color: #c62828;
+  color: #fff;
+}
+
+.icon-btn--admin-hint {
+  background: #f3b0ab;
+  border-color: #f3b0ab;
+  color: #5c1a1a;
+}
+
 .admin-tools {
   margin: 16px 24px 0;
 }

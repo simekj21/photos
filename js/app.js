@@ -398,6 +398,8 @@
       adminMode = !adminMode;
       dropzone.hidden = !adminMode;
       adminTools.hidden = !adminMode;
+      adminToggle.classList.toggle("icon-btn--admin-on", adminMode);
+      document.getElementById("events-toggle").classList.toggle("icon-btn--admin-hint", adminMode);
       adminToggle.setAttribute("aria-expanded", String(adminMode));
       document.getElementById("events-add-btn").hidden = !adminMode;
       if (!adminMode) {
