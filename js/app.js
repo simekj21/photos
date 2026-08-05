@@ -7,6 +7,10 @@
   var allTags = [];
   var activeFilterTagIds = new Set();
   var tagPickerSelection = new Set();
+  var allEvents = [];
+  var activeEventFilterId = null;
+  var eventPickerSelectedId = null;
+  var editingEventId = null;
 
   function initTheme() {
     var saved = localStorage.getItem(THEME_KEY);
@@ -65,12 +69,31 @@
       });
   }
 
-  function getFilteredPhotos() {
-    if (activeFilterTagIds.size === 0) return currentPhotos;
-    return currentPhotos.filter(function (photo) {
-      return (photo.tagIds || []).some(function (id) {
-        return activeFilterTagIds.has(id);
+  function loadEvents() {
+    return fetch("api/events.php", { cache: "no-store" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Nepodařilo se načíst akce");
+        return res.json();
+      })
+      .then(function (events) {
+        allEvents = events;
+        renderEventsList();
+      })
+      .catch(function () {
+        allEvents = [];
+        renderEventsList();
       });
+  }
+
+  function getFilteredPhotos() {
+    return currentPhotos.filter(function (photo) {
+      var matchesTags =
+        activeFilterTagIds.size === 0 ||
+        (photo.tagIds || []).some(function (id) {
+          return activeFilterTagIds.has(id);
+        });
+      var matchesEvent = !activeEventFilterId || photo.eventId === activeEventFilterId;
+      return matchesTags && matchesEvent;
     });
   }
 
@@ -285,6 +308,9 @@
       if (!document.getElementById("tag-picker").hidden) closeTagPicker();
       if (!document.getElementById("tag-manager").hidden) closeTagManager();
       if (!document.getElementById("filter-panel").hidden) document.getElementById("filter-panel").hidden = true;
+      if (!document.getElementById("event-picker").hidden) closeEventPicker();
+      if (!document.getElementById("event-editor").hidden) closeEventEditor();
+      if (!document.getElementById("events-panel").hidden) document.getElementById("events-panel").hidden = true;
     });
   }
 
@@ -373,11 +399,13 @@
       dropzone.hidden = !adminMode;
       adminTools.hidden = !adminMode;
       adminToggle.setAttribute("aria-expanded", String(adminMode));
+      document.getElementById("events-add-btn").hidden = !adminMode;
       if (!adminMode) {
         selectedIds.clear();
         updateBulkActions();
       }
       refreshDisplay();
+      renderEventsList();
     });
 
     document.getElementById("bulk-clear").addEventListener("click", clearSelection);
@@ -659,6 +687,276 @@
     });
   }
 
+  function formatEventDate(iso) {
+    if (!iso) return "";
+    var parts = iso.split("-");
+    if (parts.length !== 3) return iso;
+    return parseInt(parts[2], 10) + ". " + parseInt(parts[1], 10) + ". " + parts[0];
+  }
+
+  function formatEventRange(startDate, endDate) {
+    var start = formatEventDate(startDate);
+    if (!endDate || endDate === startDate) return start;
+    return start + " – " + formatEventDate(endDate);
+  }
+
+  function renderEventsList() {
+    var container = document.getElementById("events-list");
+    var empty = document.getElementById("events-empty");
+    container.innerHTML = "";
+    empty.hidden = allEvents.length > 0;
+    container.hidden = allEvents.length === 0;
+
+    allEvents.forEach(function (evt) {
+      var row = document.createElement("div");
+      row.className = "event-row";
+
+      var selectBtn = document.createElement("button");
+      selectBtn.type = "button";
+      selectBtn.className = "event-row__select" + (activeEventFilterId === evt.id ? " event-row__select--active" : "");
+      selectBtn.innerHTML =
+        '<span class="event-row__name"></span><span class="event-row__dates"></span>';
+      selectBtn.querySelector(".event-row__name").textContent = evt.name;
+      selectBtn.querySelector(".event-row__dates").textContent = formatEventRange(evt.startDate, evt.endDate);
+      selectBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        activeEventFilterId = activeEventFilterId === evt.id ? null : evt.id;
+        renderEventsList();
+        refreshDisplay();
+      });
+      row.appendChild(selectBtn);
+
+      if (adminMode) {
+        var editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "icon-btn";
+        editBtn.setAttribute("aria-label", "Upravit akci " + evt.name);
+        editBtn.innerHTML =
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+        editBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          openEventEditor(evt);
+        });
+        row.appendChild(editBtn);
+
+        var deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "icon-btn";
+        deleteBtn.setAttribute("aria-label", "Smazat akci " + evt.name);
+        deleteBtn.innerHTML =
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
+        deleteBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          deleteEvent(evt.id);
+        });
+        row.appendChild(deleteBtn);
+      }
+
+      container.appendChild(row);
+    });
+  }
+
+  function deleteEvent(id) {
+    if (!window.confirm("Opravdu smazat tuto akci? Fotky o ni přijdou.")) return;
+
+    fetch("api/events.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", id: id }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          window.alert("Smazání akce selhalo: " + (result.data.error || "neznámá chyba"));
+          return;
+        }
+        if (activeEventFilterId === id) activeEventFilterId = null;
+        loadEvents();
+        loadPhotos();
+      });
+  }
+
+  function openEventEditor(evt) {
+    editingEventId = evt ? evt.id : null;
+    document.getElementById("event-editor-title").textContent = evt ? "Upravit akci" : "Přidat akci";
+    document.getElementById("event-name").value = evt ? evt.name : "";
+    document.getElementById("event-location").value = evt ? evt.location || "" : "";
+    document.getElementById("event-description").value = evt ? evt.description || "" : "";
+    document.getElementById("event-participants").value = evt ? evt.participants || "" : "";
+    document.getElementById("event-start").value = evt ? evt.startDate : "";
+
+    var dateMode = !!(evt && evt.endDate);
+    document.querySelector('input[name="event-end-mode"][value="' + (dateMode ? "date" : "days") + '"]').checked = true;
+    document.getElementById("event-days").value = "1";
+    document.getElementById("event-end").value = evt && evt.endDate ? evt.endDate : "";
+    updateEventEndModeVisibility();
+
+    document.getElementById("event-editor").hidden = false;
+  }
+
+  function closeEventEditor() {
+    document.getElementById("event-editor").hidden = true;
+  }
+
+  function updateEventEndModeVisibility() {
+    var mode = document.querySelector('input[name="event-end-mode"]:checked').value;
+    document.getElementById("event-days").hidden = mode !== "days";
+    document.getElementById("event-end").hidden = mode !== "date";
+  }
+
+  function saveEvent() {
+    var name = document.getElementById("event-name").value.trim();
+    var startDate = document.getElementById("event-start").value;
+    if (!name || !startDate) {
+      window.alert("Vyplňte prosím jméno a začátek akce.");
+      return;
+    }
+
+    var endMode = document.querySelector('input[name="event-end-mode"]:checked').value;
+    var payload = {
+      action: editingEventId ? "update" : "create",
+      id: editingEventId,
+      name: name,
+      location: document.getElementById("event-location").value.trim(),
+      description: document.getElementById("event-description").value.trim(),
+      participants: document.getElementById("event-participants").value.trim(),
+      startDate: startDate,
+      endMode: endMode,
+      days: document.getElementById("event-days").value,
+      endDate: document.getElementById("event-end").value,
+    };
+
+    fetch("api/events.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          window.alert("Uložení akce selhalo: " + (result.data.error || "neznámá chyba"));
+          return;
+        }
+        closeEventEditor();
+        loadEvents();
+      });
+  }
+
+  function initEventEditor() {
+    document.getElementById("events-add-btn").addEventListener("click", function () {
+      openEventEditor(null);
+    });
+    document.getElementById("event-editor-cancel").addEventListener("click", closeEventEditor);
+    document.getElementById("event-editor-save").addEventListener("click", saveEvent);
+    document.getElementById("event-editor").addEventListener("click", function (event) {
+      if (event.target.id === "event-editor") closeEventEditor();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="event-end-mode"]'), function (radio) {
+      radio.addEventListener("change", updateEventEndModeVisibility);
+    });
+  }
+
+  function renderEventPickerList() {
+    var container = document.getElementById("event-picker-list");
+    var empty = document.getElementById("event-picker-empty");
+    container.innerHTML = "";
+    empty.hidden = allEvents.length > 0;
+
+    allEvents.forEach(function (evt) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tag-chip" + (eventPickerSelectedId === evt.id ? " tag-chip--active" : "");
+      chip.textContent = evt.name;
+      chip.addEventListener("click", function () {
+        eventPickerSelectedId = eventPickerSelectedId === evt.id ? null : evt.id;
+        renderEventPickerList();
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function openEventPicker() {
+    eventPickerSelectedId = null;
+    renderEventPickerList();
+    document.getElementById("event-picker").hidden = false;
+  }
+
+  function closeEventPicker() {
+    document.getElementById("event-picker").hidden = true;
+  }
+
+  function initEventPicker() {
+    document.getElementById("bulk-event").addEventListener("click", openEventPicker);
+    document.getElementById("event-picker-cancel").addEventListener("click", closeEventPicker);
+    document.getElementById("event-picker").addEventListener("click", function (event) {
+      if (event.target.id === "event-picker") closeEventPicker();
+    });
+
+    document.getElementById("event-picker-apply").addEventListener("click", function () {
+      if (!eventPickerSelectedId) {
+        window.alert("Vyberte akci.");
+        return;
+      }
+
+      fetch("api/photo-events.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoIds: Array.from(selectedIds), eventId: eventPickerSelectedId }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok) {
+            window.alert("Přiřazení akce selhalo: " + (result.data.error || "neznámá chyba"));
+            return;
+          }
+          closeEventPicker();
+          selectedIds.clear();
+          updateBulkActions();
+          loadPhotos();
+        })
+        .catch(function () {
+          window.alert("Přiřazení akce selhalo. Zkuste to prosím znovu.");
+        });
+    });
+  }
+
+  function initEventsPanel() {
+    var eventsToggle = document.getElementById("events-toggle");
+    var eventsPanel = document.getElementById("events-panel");
+
+    eventsToggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      var willOpen = eventsPanel.hidden;
+      eventsPanel.hidden = !willOpen;
+      eventsToggle.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!eventsPanel.hidden && !eventsPanel.contains(event.target) && event.target !== eventsToggle) {
+        eventsPanel.hidden = true;
+        eventsToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    document.getElementById("events-filter-clear").addEventListener("click", function () {
+      activeEventFilterId = null;
+      renderEventsList();
+      refreshDisplay();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
@@ -667,7 +965,11 @@
     initFilter();
     initTagPicker();
     initTagManager();
+    initEventsPanel();
+    initEventEditor();
+    initEventPicker();
     loadPhotos();
     loadTags();
+    loadEvents();
   });
 })();

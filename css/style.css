@@ -274,6 +274,104 @@ body {
   gap: 8px;
 }
 
+.events-panel {
+  min-width: 260px;
+  max-width: 320px;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.events-list[hidden] {
+  display: none;
+}
+
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-row__select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.event-row__select:hover {
+  border-color: var(--text-muted);
+}
+
+.event-row__select--active {
+  background: #378ada;
+  border-color: #378ada;
+  color: #fff;
+}
+
+.event-row__name {
+  display: block;
+  font-weight: 600;
+}
+
+.event-row__dates {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.events-panel .btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.form-field:first-of-type {
+  margin-top: 0;
+}
+
+.form-field label,
+.form-field__label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.form-field textarea.input {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.radio-row {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+}
+
 .bulk-actions {
   display: flex;
   align-items: center;

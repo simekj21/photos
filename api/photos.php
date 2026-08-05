@@ -24,6 +24,7 @@ usort($photos, function ($a, $b) {
 
 foreach ($photos as &$photo) {
     $photo['tagIds'] = $photo['tagIds'] ?? [];
+    $photo['eventId'] = $photo['eventId'] ?? null;
 }
 unset($photo);
 

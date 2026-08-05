@@ -23,6 +23,17 @@
         <button id="filter-clear" class="btn">zrušit filtr</button>
       </div>
     </div>
+    <div class="filter-wrap">
+      <button id="events-toggle" class="icon-btn" aria-label="Filtrovat podle akce" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </button>
+      <div id="events-panel" class="filter-panel events-panel" hidden>
+        <div id="events-list" class="events-list"></div>
+        <p id="events-empty" class="filter-panel__empty" hidden>Zatím žádné akce.</p>
+        <button id="events-filter-clear" class="btn">zrušit filtr</button>
+        <button id="events-add-btn" class="btn" hidden>+ přidat akci</button>
+      </div>
+    </div>
     <button id="admin-toggle" class="icon-btn" aria-label="Administrátorský režim" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -48,6 +59,7 @@
 <div id="bulk-actions" class="bulk-actions" hidden>
   <span id="bulk-count" class="bulk-actions__count"></span>
   <button id="bulk-tag" class="btn">přidat tagy</button>
+  <button id="bulk-event" class="btn">přiřadit akci</button>
   <button id="bulk-clear" class="btn">zrušit výběr</button>
   <button id="bulk-delete" class="btn btn--danger">smazat vybrané</button>
 </div>
@@ -82,6 +94,57 @@
     <div class="modal__actions">
       <button id="tag-picker-cancel" class="btn">zrušit</button>
       <button id="tag-picker-apply" class="btn btn--primary">použít</button>
+    </div>
+  </div>
+</div>
+
+<div id="event-picker" class="modal" hidden>
+  <div class="modal__panel">
+    <h2 class="modal__title">Přiřadit akci vybraným fotkám</h2>
+    <div id="event-picker-list" class="tag-chips"></div>
+    <p id="event-picker-empty" class="filter-panel__empty" hidden>Zatím žádné akce - vytvořte je přes ikonu akcí.</p>
+    <div class="modal__actions">
+      <button id="event-picker-cancel" class="btn">zrušit</button>
+      <button id="event-picker-apply" class="btn btn--primary">použít</button>
+    </div>
+  </div>
+</div>
+
+<div id="event-editor" class="modal" hidden>
+  <div class="modal__panel">
+    <h2 id="event-editor-title" class="modal__title">Přidat akci</h2>
+    <div class="form-field">
+      <label for="event-name">Jméno</label>
+      <input id="event-name" type="text" class="input" placeholder="např. Itálie 2025">
+    </div>
+    <div class="form-field">
+      <label for="event-location">Lokace</label>
+      <input id="event-location" type="text" class="input">
+    </div>
+    <div class="form-field">
+      <label for="event-description">Popis</label>
+      <textarea id="event-description" class="input" rows="3"></textarea>
+    </div>
+    <div class="form-field">
+      <label for="event-participants">Účastníci</label>
+      <input id="event-participants" type="text" class="input" placeholder="např. Jana, Petr">
+    </div>
+    <div class="form-field">
+      <label for="event-start">Začátek</label>
+      <input id="event-start" type="date" class="input">
+    </div>
+    <div class="form-field">
+      <span class="form-field__label">Konec</span>
+      <div class="radio-row">
+        <label><input type="radio" name="event-end-mode" value="days" checked> počet dní</label>
+        <label><input type="radio" name="event-end-mode" value="date"> konkrétní datum</label>
+      </div>
+      <input id="event-days" type="number" min="1" value="1" class="input">
+      <input id="event-end" type="date" class="input" hidden>
+    </div>
+    <div class="modal__actions">
+      <button id="event-editor-cancel" class="btn">zrušit</button>
+      <button id="event-editor-save" class="btn btn--primary">uložit</button>
     </div>
   </div>
 </div>
