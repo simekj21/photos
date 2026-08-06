@@ -923,8 +923,7 @@
 
   function deleteEvent(id, name) {
     pendingDeleteEventId = id;
-    document.getElementById("event-delete-modal-text").textContent =
-      'Opravdu smazat akci "' + name + '"? Fotky patřící k této akci můžete buď ponechat (jen se od akce odpojí), nebo smazat úplně.';
+    document.getElementById("event-delete-modal-text").textContent = 'Opravdu smazat akci "' + name + '"?';
     document.getElementById("event-delete-modal").hidden = false;
   }
 
