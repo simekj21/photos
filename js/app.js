@@ -909,7 +909,7 @@
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
         deleteBtn.addEventListener("click", function (e) {
           e.stopPropagation();
-          deleteEvent(evt.id);
+          deleteEvent(evt.id, evt.name);
         });
         row.appendChild(deleteBtn);
       }
@@ -918,13 +918,17 @@
     });
   }
 
-  function deleteEvent(id) {
-    if (!window.confirm("Opravdu smazat tuto akci? Fotky o ni přijdou.")) return;
+  function deleteEvent(id, name) {
+    if (!window.confirm('Opravdu smazat akci "' + name + '"?')) return;
+
+    var deletePhotos = window.confirm(
+      'Smazat i všechny fotky patřící k této akci?\n\nOK = smazat akci i s fotkami (nevratné)\nZrušit = smazat jen akci, fotky zůstanou zachované (jen se od ní odpojí)'
+    );
 
     adminFetch("api/events.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "delete", id: id }),
+      body: JSON.stringify({ action: "delete", id: id, deletePhotos: deletePhotos }),
     })
       .then(function (res) {
         return res.json().then(function (data) {

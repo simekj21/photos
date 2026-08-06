@@ -47,6 +47,34 @@ function remove_event_from_photos(string $eventId): void {
     @file_put_contents($dataFile, json_encode($photos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
+function delete_event_photos(string $eventId): void {
+    $dataFile = __DIR__ . '/../data/photos.json';
+    $root = __DIR__ . '/..';
+    if (!file_exists($dataFile)) {
+        return;
+    }
+    $photos = json_decode(file_get_contents($dataFile), true);
+    if (!is_array($photos)) {
+        return;
+    }
+    $remaining = [];
+    foreach ($photos as $photo) {
+        if (($photo['eventId'] ?? null) === $eventId) {
+            foreach (['originalUrl', 'thumbUrl'] as $key) {
+                if (!empty($photo[$key])) {
+                    $path = $root . '/' . $photo[$key];
+                    if (is_file($path)) {
+                        @unlink($path);
+                    }
+                }
+            }
+        } else {
+            $remaining[] = $photo;
+        }
+    }
+    @file_put_contents($dataFile, json_encode($remaining, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+
 function compute_end_date(string $startDate, string $endMode, $days, $endDate): ?string {
     if ($endMode === 'date') {
         return $endDate !== null && $endDate !== '' ? $endDate : null;
@@ -155,7 +183,11 @@ if ($action === 'delete') {
         json_response(['error' => 'Uložení akce selhalo'], 500);
     }
 
-    remove_event_from_photos($id);
+    if (!empty($input['deletePhotos'])) {
+        delete_event_photos($id);
+    } else {
+        remove_event_from_photos($id);
+    }
 
     json_response(['deleted' => $id]);
 }
