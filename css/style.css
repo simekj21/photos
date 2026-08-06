@@ -82,6 +82,16 @@ body {
   border-color: var(--text-muted);
 }
 
+.icon-btn--danger {
+  color: #b3261e;
+  border-color: #b3261e;
+}
+
+.icon-btn--danger:hover {
+  background: #b3261e;
+  color: #fff;
+}
+
 .dropzone {
   margin: 16px 24px 0;
   padding: 24px;
@@ -189,6 +199,10 @@ body {
 }
 
 .admin-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   margin: 16px 24px 0;
 }
 

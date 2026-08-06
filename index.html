@@ -56,25 +56,43 @@
 <div id="dropzone" class="dropzone" hidden>
   <p class="dropzone__text">Přetáhněte sem fotky, nebo</p>
   <div class="dropzone__actions">
-    <button id="pick-files" class="btn">vybrat fotky</button>
-    <button id="import-btn" class="btn">nahrát z adresáře</button>
-    <button id="delete-folders-btn" class="btn">smazat adresáře</button>
+    <button id="pick-files" class="icon-btn" aria-label="Vybrat fotky" title="Vybrat fotky">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+    <button id="import-btn" class="icon-btn" aria-label="Nahrát z adresáře" title="Nahrát z adresáře">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+    </button>
+    <button id="delete-folders-btn" class="icon-btn" aria-label="Smazat adresáře" title="Smazat adresáře">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+    </button>
   </div>
   <input id="file-input" type="file" accept="image/*" multiple hidden>
   <p id="upload-status" class="dropzone__status"></p>
 </div>
 
 <div id="admin-tools" class="admin-tools" hidden>
-  <button id="manage-tags-btn" class="btn">spravovat tagy</button>
-  <button id="select-all-btn" class="btn">vybrat vše</button>
+  <button id="manage-tags-btn" class="icon-btn" aria-label="Spravovat tagy" title="Spravovat tagy">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+  </button>
+  <button id="select-all-btn" class="icon-btn" aria-label="Vybrat vše" title="Vybrat vše">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+  </button>
 </div>
 
 <div id="bulk-actions" class="bulk-actions" hidden>
   <span id="bulk-count" class="bulk-actions__count"></span>
-  <button id="bulk-tag" class="btn">přidat tagy</button>
-  <button id="bulk-event" class="btn">přiřadit akci</button>
-  <button id="bulk-clear" class="btn">zrušit výběr</button>
-  <button id="bulk-delete" class="btn btn--danger">smazat vybrané</button>
+  <button id="bulk-tag" class="icon-btn" aria-label="Přidat tagy" title="Přidat tagy">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+  </button>
+  <button id="bulk-event" class="icon-btn" aria-label="Přiřadit akci" title="Přiřadit akci">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+  </button>
+  <button id="bulk-clear" class="icon-btn" aria-label="Zrušit výběr" title="Zrušit výběr">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <button id="bulk-delete" class="icon-btn icon-btn--danger" aria-label="Smazat vybrané" title="Smazat vybrané">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>
+  </button>
 </div>
 
 <main id="gallery" class="gallery"></main>
