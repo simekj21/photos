@@ -306,6 +306,14 @@
     refreshDisplay();
   }
 
+  function selectAllVisible() {
+    getFilteredPhotos().forEach(function (photo) {
+      selectedIds.add(photo.id);
+    });
+    updateBulkActions();
+    refreshDisplay();
+  }
+
   function updateBulkActions() {
     var bar = document.getElementById("bulk-actions");
     var count = selectedIds.size;
@@ -538,6 +546,7 @@
     document.getElementById("bulk-delete").addEventListener("click", bulkDeletePhotos);
     document.getElementById("bulk-tag").addEventListener("click", openTagPicker);
     document.getElementById("manage-tags-btn").addEventListener("click", openTagManager);
+    document.getElementById("select-all-btn").addEventListener("click", selectAllVisible);
   }
 
   function renderFilterChips() {
