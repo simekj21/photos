@@ -17,6 +17,11 @@
   var incomingFolders = [];
   var selectedIncomingFolder = null;
   var incomingExistingEventId = null;
+  var incomingCountryCode = null;
+  var activeCountryFilterCode = null;
+  var countryPickerSelectedCode = null;
+  var countryPickerConfirmCallback = null;
+  var countryPickerCancelCallback = null;
 
   function initTheme() {
     var saved = localStorage.getItem(THEME_KEY);
@@ -214,6 +219,7 @@
         if (!adminMode) {
           applyTileSizeSliderBounds();
         }
+        renderCountryFilterList();
         refreshDisplay();
       })
       .catch(function () {
@@ -262,7 +268,8 @@
           return activeFilterTagIds.has(id);
         });
       var matchesEvent = !activeEventFilterId || photo.eventId === activeEventFilterId;
-      return matchesTags && matchesEvent;
+      var matchesCountry = !activeCountryFilterCode || photo.countryCode === activeCountryFilterCode;
+      return matchesTags && matchesEvent && matchesCountry;
     });
   }
 
@@ -489,6 +496,8 @@
       if (!document.getElementById("event-editor").hidden) closeEventEditor();
       if (!document.getElementById("event-delete-modal").hidden) closeEventDeleteModal();
       if (!document.getElementById("events-panel").hidden) document.getElementById("events-panel").hidden = true;
+      if (!document.getElementById("country-filter-panel").hidden) document.getElementById("country-filter-panel").hidden = true;
+      if (!document.getElementById("country-picker").hidden) closeCountryPickerCancel();
       if (!document.getElementById("admin-login").hidden) closeAdminLogin();
       if (!document.getElementById("incoming-picker").hidden) closeIncomingPicker();
       if (!document.getElementById("delete-folders-modal").hidden) closeDeleteFoldersModal();
@@ -503,11 +512,7 @@
     document.getElementById("upload-status").textContent = text;
   }
 
-  function uploadFiles(fileList) {
-    var files = Array.prototype.filter.call(fileList, function (file) {
-      return file.type.indexOf("image/") === 0;
-    });
-
+  function uploadFiles(files, countryCode) {
     if (files.length === 0) {
       setUploadStatus("Vyberte prosím obrázky.");
       return;
@@ -517,6 +522,9 @@
     files.forEach(function (file) {
       formData.append("photos[]", file);
     });
+    if (countryCode) {
+      formData.append("countryCode", countryCode);
+    }
 
     setUploadStatus("Nahrávám " + files.length + " " + (files.length === 1 ? "fotku" : "fotek") + "...");
 
@@ -542,6 +550,27 @@
       });
   }
 
+  function startUpload(fileList) {
+    var files = Array.prototype.filter.call(fileList, function (file) {
+      return file.type.indexOf("image/") === 0;
+    });
+
+    if (files.length === 0) {
+      setUploadStatus("Vyberte prosím obrázky.");
+      return;
+    }
+
+    openCountryPicker({
+      title: "Jaké zemi fotky patří?",
+      onConfirm: function (countryCode) {
+        uploadFiles(files, countryCode);
+      },
+      onCancel: function () {
+        setUploadStatus("");
+      },
+    });
+  }
+
   function initUpload() {
     var dropzone = document.getElementById("dropzone");
     var fileInput = document.getElementById("file-input");
@@ -552,7 +581,7 @@
 
     fileInput.addEventListener("change", function () {
       if (fileInput.files.length > 0) {
-        uploadFiles(fileInput.files);
+        startUpload(fileInput.files);
         fileInput.value = "";
       }
     });
@@ -573,7 +602,7 @@
 
     dropzone.addEventListener("drop", function (event) {
       if (event.dataTransfer.files.length > 0) {
-        uploadFiles(event.dataTransfer.files);
+        startUpload(event.dataTransfer.files);
       }
     });
 
@@ -1194,6 +1223,175 @@
     });
   }
 
+  function getCountryName(code) {
+    var country = window.COUNTRIES.filter(function (c) {
+      return c.code === code;
+    })[0];
+    return country ? country.name : code;
+  }
+
+  function getUsedCountries() {
+    var seen = {};
+    var list = [];
+    currentPhotos.forEach(function (photo) {
+      var code = photo.countryCode;
+      if (code && !seen[code]) {
+        seen[code] = true;
+        list.push({ code: code, name: getCountryName(code) });
+      }
+    });
+    list.sort(function (a, b) {
+      return a.name.localeCompare(b.name, "cs");
+    });
+    return list;
+  }
+
+  function renderCountryFilterList() {
+    var container = document.getElementById("country-filter-list");
+    var empty = document.getElementById("country-filter-empty");
+    var countries = getUsedCountries();
+    container.innerHTML = "";
+    empty.hidden = countries.length > 0;
+    container.hidden = countries.length === 0;
+
+    countries.forEach(function (country) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "event-row__select" + (activeCountryFilterCode === country.code ? " event-row__select--active" : "");
+      btn.textContent = country.name;
+      btn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        activeCountryFilterCode = activeCountryFilterCode === country.code ? null : country.code;
+        renderCountryFilterList();
+        refreshDisplay();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function initCountryFilterPanel() {
+    var toggle = document.getElementById("country-filter-toggle");
+    var panel = document.getElementById("country-filter-panel");
+
+    toggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      var willOpen = panel.hidden;
+      panel.hidden = !willOpen;
+      toggle.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!panel.hidden && !panel.contains(event.target) && event.target !== toggle) {
+        panel.hidden = true;
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    document.getElementById("country-filter-clear").addEventListener("click", function () {
+      activeCountryFilterCode = null;
+      renderCountryFilterList();
+      refreshDisplay();
+    });
+  }
+
+  function renderCountryPickerList(query) {
+    var container = document.getElementById("country-picker-list");
+    container.innerHTML = "";
+    var q = query.trim().toLowerCase();
+    var list = window.COUNTRIES.filter(function (c) {
+      return !q || c.name.toLowerCase().indexOf(q) !== -1;
+    });
+
+    list.forEach(function (c) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tag-chip" + (countryPickerSelectedCode === c.code ? " tag-chip--active" : "");
+      chip.textContent = c.name;
+      chip.addEventListener("click", function () {
+        countryPickerSelectedCode = c.code;
+        renderCountryPickerList(document.getElementById("country-picker-search").value);
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function openCountryPicker(options) {
+    countryPickerConfirmCallback = options.onConfirm || null;
+    countryPickerCancelCallback = options.onCancel || null;
+    countryPickerSelectedCode = options.initialCode || null;
+    document.getElementById("country-picker-title").textContent = options.title || "Vybrat zemi";
+    document.getElementById("country-picker-search").value = "";
+    renderCountryPickerList("");
+    document.getElementById("country-picker").hidden = false;
+    document.getElementById("country-picker-search").focus();
+  }
+
+  function closeCountryPickerCancel() {
+    document.getElementById("country-picker").hidden = true;
+    var callback = countryPickerCancelCallback;
+    countryPickerConfirmCallback = null;
+    countryPickerCancelCallback = null;
+    if (callback) callback();
+  }
+
+  function closeCountryPickerConfirm(code) {
+    document.getElementById("country-picker").hidden = true;
+    var callback = countryPickerConfirmCallback;
+    countryPickerConfirmCallback = null;
+    countryPickerCancelCallback = null;
+    if (callback) callback(code);
+  }
+
+  function initCountryPicker() {
+    document.getElementById("country-picker-search").addEventListener("input", function () {
+      renderCountryPickerList(this.value);
+    });
+    document.getElementById("country-picker-cancel").addEventListener("click", closeCountryPickerCancel);
+    document.getElementById("country-picker-skip").addEventListener("click", function () {
+      closeCountryPickerConfirm(null);
+    });
+    document.getElementById("country-picker-apply").addEventListener("click", function () {
+      if (!countryPickerSelectedCode) {
+        window.alert('Vyberte zemi, nebo zvolte "bez země".');
+        return;
+      }
+      closeCountryPickerConfirm(countryPickerSelectedCode);
+    });
+    document.getElementById("country-picker").addEventListener("click", function (event) {
+      if (event.target.id === "country-picker") closeCountryPickerCancel();
+    });
+  }
+
+  function initBulkCountry() {
+    document.getElementById("bulk-country").addEventListener("click", function () {
+      openCountryPicker({
+        title: "Přiřadit zemi vybraným fotkám",
+        onConfirm: function (countryCode) {
+          adminFetch("api/photo-countries.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ photoIds: Array.from(selectedIds), countryCode: countryCode }),
+          })
+            .then(function (res) {
+              return res.json().then(function (data) {
+                return { ok: res.ok, data: data };
+              });
+            })
+            .then(function (result) {
+              if (!result.ok) {
+                window.alert("Přiřazení země selhalo: " + (result.data.error || "neznámá chyba"));
+                return;
+              }
+              selectedIds.clear();
+              updateBulkActions();
+              loadPhotos();
+            });
+        },
+      });
+    });
+  }
+
   function loadIncomingFolders() {
     return adminFetch("api/incoming.php", { cache: "no-store" })
       .then(function (res) {
@@ -1272,9 +1470,15 @@
     btn.dataset.done = succeeded ? "1" : "";
   }
 
+  function updateIncomingCountryButtonLabel() {
+    var btn = document.getElementById("incoming-country-btn");
+    btn.textContent = incomingCountryCode ? getCountryName(incomingCountryCode) : "vybrat zemi";
+  }
+
   function openIncomingPicker() {
     selectedIncomingFolder = null;
     incomingExistingEventId = null;
+    incomingCountryCode = null;
     document.getElementById("incoming-event-section").hidden = true;
     document.getElementById("incoming-event-name").value = "";
     document.getElementById("incoming-event-start").value = new Date().toISOString().slice(0, 10);
@@ -1284,6 +1488,7 @@
     setIncomingImportButtonState(false);
     renderIncomingExistingEvents();
     updateIncomingEventModeVisibility();
+    updateIncomingCountryButtonLabel();
     document.getElementById("incoming-picker").hidden = false;
     loadIncomingFolders();
   }
@@ -1300,7 +1505,12 @@
 
     var eventMode = document.querySelector('input[name="incoming-event-mode"]:checked').value;
     var deleteOriginals = document.getElementById("incoming-delete-originals").checked;
-    var payload = { folder: selectedIncomingFolder, eventMode: eventMode, deleteOriginals: deleteOriginals };
+    var payload = {
+      folder: selectedIncomingFolder,
+      eventMode: eventMode,
+      deleteOriginals: deleteOriginals,
+      countryCode: incomingCountryCode,
+    };
 
     if (eventMode === "new") {
       payload.eventName = document.getElementById("incoming-event-name").value.trim();
@@ -1359,6 +1569,16 @@
   function initIncomingPicker() {
     document.getElementById("import-btn").addEventListener("click", openIncomingPicker);
     document.getElementById("incoming-cancel").addEventListener("click", closeIncomingPicker);
+    document.getElementById("incoming-country-btn").addEventListener("click", function () {
+      openCountryPicker({
+        title: "Jaké zemi fotky patří?",
+        initialCode: incomingCountryCode,
+        onConfirm: function (countryCode) {
+          incomingCountryCode = countryCode;
+          updateIncomingCountryButtonLabel();
+        },
+      });
+    });
     document.getElementById("incoming-import").addEventListener("click", function () {
       if (document.getElementById("incoming-import").dataset.done === "1") {
         closeIncomingPicker();
@@ -1481,6 +1701,9 @@
     initEventsPanel();
     initEventEditor();
     initEventPicker();
+    initCountryFilterPanel();
+    initCountryPicker();
+    initBulkCountry();
     initAdminLogin();
     initIncomingPicker();
     initDeleteFoldersModal();

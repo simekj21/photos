@@ -27,6 +27,7 @@ if (empty($_FILES['photos'])) {
 
 $files = $_FILES['photos'];
 $fileCount = is_array($files['name']) ? count($files['name']) : 0;
+$countryCode = trim((string) ($_POST['countryCode'] ?? '')) ?: null;
 
 if ($fileCount === 0) {
     json_response(['error' => 'Nebyly nahrány žádné soubory'], 400);
@@ -81,6 +82,7 @@ for ($i = 0; $i < $fileCount; $i++) {
         'uploadedAt' => date('c'),
         'width' => $dims['width'],
         'height' => $dims['height'],
+        'countryCode' => $countryCode,
     ];
 
     $photos[] = $record;

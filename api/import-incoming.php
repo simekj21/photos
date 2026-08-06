@@ -45,6 +45,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $folder = (string) ($input['folder'] ?? '');
 $eventMode = $input['eventMode'] ?? 'none';
 $deleteOriginals = !array_key_exists('deleteOriginals', (array) $input) || (bool) $input['deleteOriginals'];
+$countryCode = trim((string) ($input['countryCode'] ?? '')) ?: null;
 
 if ($folder === '' || basename($folder) !== $folder || $folder === '.' || $folder === '..') {
     json_response(['error' => 'Neplatný název složky'], 400);
@@ -144,6 +145,7 @@ foreach (scandir($realSourceDir) ?: [] as $entry) {
         'width' => $dims['width'],
         'height' => $dims['height'],
         'eventId' => $eventId,
+        'countryCode' => $countryCode,
     ];
 
     $photos[] = $record;
