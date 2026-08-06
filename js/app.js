@@ -48,7 +48,9 @@
     });
   }
 
-  function getDefaultTileSize() {
+  var AUTO_FILL_FLOOR_TILE_SIZE = 40;
+
+  function getCssDefaultTileSize() {
     return parseInt(getComputedStyle(document.documentElement).getPropertyValue("--tile-size"), 10) || 140;
   }
 
@@ -56,13 +58,56 @@
     document.documentElement.style.setProperty("--tile-size", px + "px");
   }
 
-  function applySavedTileSize() {
-    var saved = localStorage.getItem(TILE_SIZE_KEY);
-    if (saved) {
-      applyTileSize(parseInt(saved, 10));
-    } else {
-      document.documentElement.style.removeProperty("--tile-size");
+  function computeFillTileSize(photoCount) {
+    var gallery = document.getElementById("gallery");
+    if (!photoCount || !gallery) return getCssDefaultTileSize();
+
+    var gap = 8;
+    var galleryStyle = getComputedStyle(gallery);
+    var containerWidth = gallery.clientWidth - parseFloat(galleryStyle.paddingLeft) - parseFloat(galleryStyle.paddingRight);
+    if (!containerWidth) return getCssDefaultTileSize();
+
+    var availableHeight = window.innerHeight - gallery.getBoundingClientRect().top - 32;
+    if (availableHeight < 150) availableHeight = 150;
+
+    // The grid uses minmax(tileSize, 1fr), so a column's rendered width - and by
+    // extension its square tile's height - is whatever width n columns stretch to,
+    // not the raw tileSize. Search nearby column counts for the one whose resulting
+    // grid height comes closest to availableHeight without going over it.
+    var estimate = Math.sqrt((photoCount * containerWidth) / availableHeight);
+    var minCols = Math.max(1, Math.floor(estimate) - 1);
+    var maxCols = Math.ceil(estimate) + 1;
+
+    var fitting = null;
+    var overflowing = null;
+
+    for (var cols = minCols; cols <= maxCols; cols++) {
+      var rows = Math.ceil(photoCount / cols);
+      var tileSize = (containerWidth - gap * (cols - 1)) / cols;
+      var totalHeight = rows * tileSize + gap * (rows - 1);
+
+      if (totalHeight <= availableHeight) {
+        if (!fitting || totalHeight > fitting.totalHeight) fitting = { cols: cols, totalHeight: totalHeight };
+      } else if (!overflowing || totalHeight < overflowing.totalHeight) {
+        overflowing = { cols: cols, totalHeight: totalHeight };
+      }
     }
+
+    var bestCols = fitting ? fitting.cols : overflowing.cols;
+    var finalTileSize = Math.floor((containerWidth - gap * (bestCols - 1)) / bestCols);
+
+    return Math.max(AUTO_FILL_FLOOR_TILE_SIZE, finalTileSize);
+  }
+
+  function applyTileSizeSliderBounds() {
+    var slider = document.getElementById("tile-size-slider");
+    var defaultSize = computeFillTileSize(currentPhotos.length);
+    slider.max = String(defaultSize);
+
+    var saved = localStorage.getItem(TILE_SIZE_KEY);
+    var value = saved ? Math.min(parseInt(saved, 10), defaultSize) : defaultSize;
+    slider.value = String(value);
+    applyTileSize(value);
   }
 
   function enterAdminMode() {
@@ -89,7 +134,7 @@
     document.getElementById("events-toggle").classList.remove("icon-btn--admin-hint");
     document.getElementById("events-add-btn").hidden = true;
     document.getElementById("tile-size-toggle").disabled = false;
-    applySavedTileSize();
+    applyTileSizeSliderBounds();
     selectedIds.clear();
     updateBulkActions();
     refreshDisplay();
@@ -166,6 +211,9 @@
       .then(function (photos) {
         currentPhotos = photos;
         document.getElementById("photo-count").textContent = pluralizePhotos(photos.length);
+        if (!adminMode) {
+          applyTileSizeSliderBounds();
+        }
         refreshDisplay();
       })
       .catch(function () {
@@ -606,17 +654,7 @@
     var panel = document.getElementById("tile-size-panel");
     var slider = document.getElementById("tile-size-slider");
 
-    var defaultSize = getDefaultTileSize();
-    slider.max = String(defaultSize);
-
-    var saved = localStorage.getItem(TILE_SIZE_KEY);
-    if (saved) {
-      var value = Math.min(parseInt(saved, 10), defaultSize);
-      slider.value = String(value);
-      applyTileSize(value);
-    } else {
-      slider.value = String(defaultSize);
-    }
+    applyTileSizeSliderBounds();
 
     slider.addEventListener("input", function () {
       var value = parseInt(slider.value, 10);
