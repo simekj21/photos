@@ -431,6 +431,7 @@
       if (!document.getElementById("filter-panel").hidden) document.getElementById("filter-panel").hidden = true;
       if (!document.getElementById("event-picker").hidden) closeEventPicker();
       if (!document.getElementById("event-editor").hidden) closeEventEditor();
+      if (!document.getElementById("event-delete-modal").hidden) closeEventDeleteModal();
       if (!document.getElementById("events-panel").hidden) document.getElementById("events-panel").hidden = true;
       if (!document.getElementById("admin-login").hidden) closeAdminLogin();
       if (!document.getElementById("incoming-picker").hidden) closeIncomingPicker();
@@ -918,12 +919,24 @@
     });
   }
 
-  function deleteEvent(id, name) {
-    if (!window.confirm('Opravdu smazat akci "' + name + '"?')) return;
+  var pendingDeleteEventId = null;
 
-    var deletePhotos = window.confirm(
-      'Smazat i všechny fotky patřící k této akci?\n\nOK = smazat akci i s fotkami (nevratné)\nZrušit = smazat jen akci, fotky zůstanou zachované (jen se od ní odpojí)'
-    );
+  function deleteEvent(id, name) {
+    pendingDeleteEventId = id;
+    document.getElementById("event-delete-modal-text").textContent =
+      'Opravdu smazat akci "' + name + '"? Fotky patřící k této akci můžete buď ponechat (jen se od akce odpojí), nebo smazat úplně.';
+    document.getElementById("event-delete-modal").hidden = false;
+  }
+
+  function closeEventDeleteModal() {
+    pendingDeleteEventId = null;
+    document.getElementById("event-delete-modal").hidden = true;
+  }
+
+  function confirmDeleteEvent(deletePhotos) {
+    var id = pendingDeleteEventId;
+    if (!id) return;
+    closeEventDeleteModal();
 
     adminFetch("api/events.php", {
       method: "POST",
@@ -1024,6 +1037,17 @@
     document.getElementById("event-editor-save").addEventListener("click", saveEvent);
     document.getElementById("event-editor").addEventListener("click", function (event) {
       if (event.target.id === "event-editor") closeEventEditor();
+    });
+
+    document.getElementById("event-delete-cancel").addEventListener("click", closeEventDeleteModal);
+    document.getElementById("event-delete-keep-photos").addEventListener("click", function () {
+      confirmDeleteEvent(false);
+    });
+    document.getElementById("event-delete-with-photos").addEventListener("click", function () {
+      confirmDeleteEvent(true);
+    });
+    document.getElementById("event-delete-modal").addEventListener("click", function (event) {
+      if (event.target.id === "event-delete-modal") closeEventDeleteModal();
     });
     Array.prototype.forEach.call(document.querySelectorAll('input[name="event-end-mode"]'), function (radio) {
       radio.addEventListener("change", updateEventEndModeVisibility);
