@@ -435,6 +435,7 @@
       if (!document.getElementById("events-panel").hidden) document.getElementById("events-panel").hidden = true;
       if (!document.getElementById("admin-login").hidden) closeAdminLogin();
       if (!document.getElementById("incoming-picker").hidden) closeIncomingPicker();
+      if (!document.getElementById("delete-folders-modal").hidden) closeDeleteFoldersModal();
       if (!document.getElementById("tile-size-panel").hidden) {
         document.getElementById("tile-size-panel").hidden = true;
         document.getElementById("tile-size-toggle").setAttribute("aria-expanded", "false");
@@ -1231,6 +1232,7 @@
     document.getElementById("incoming-event-name").value = "";
     document.getElementById("incoming-event-start").value = new Date().toISOString().slice(0, 10);
     document.querySelector('input[name="incoming-event-mode"][value="new"]').checked = true;
+    document.getElementById("incoming-delete-originals").checked = true;
     document.getElementById("incoming-status").hidden = true;
     setIncomingImportButtonState(false);
     renderIncomingExistingEvents();
@@ -1250,7 +1252,8 @@
     }
 
     var eventMode = document.querySelector('input[name="incoming-event-mode"]:checked').value;
-    var payload = { folder: selectedIncomingFolder, eventMode: eventMode };
+    var deleteOriginals = document.getElementById("incoming-delete-originals").checked;
+    var payload = { folder: selectedIncomingFolder, eventMode: eventMode, deleteOriginals: deleteOriginals };
 
     if (eventMode === "new") {
       payload.eventName = document.getElementById("incoming-event-name").value.trim();
@@ -1324,6 +1327,101 @@
     });
   }
 
+  function loadDeleteFolders() {
+    var statusEl = document.getElementById("delete-folders-status");
+    return adminFetch("api/incoming.php", { cache: "no-store" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Nepodařilo se načíst složky");
+        return res.json();
+      })
+      .then(function (folders) {
+        renderDeleteFoldersList(folders);
+      })
+      .catch(function () {
+        renderDeleteFoldersList([]);
+        statusEl.hidden = false;
+        statusEl.className = "form-error";
+        statusEl.textContent = "Nepodařilo se načíst složky.";
+      });
+  }
+
+  function renderDeleteFoldersList(folders) {
+    var container = document.getElementById("delete-folders-list");
+    var empty = document.getElementById("delete-folders-empty");
+    container.innerHTML = "";
+    empty.hidden = folders.length > 0;
+
+    folders.forEach(function (folder) {
+      var row = document.createElement("div");
+      row.className = "event-row";
+
+      var label = document.createElement("span");
+      label.className = "event-row__select";
+      label.innerHTML = '<span class="event-row__name"></span><span class="event-row__dates"></span>';
+      label.querySelector(".event-row__name").textContent = folder.name;
+      label.querySelector(".event-row__dates").textContent = folder.count + " fotek";
+      row.appendChild(label);
+
+      var deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "icon-btn";
+      deleteBtn.setAttribute("aria-label", "Smazat adresář " + folder.name);
+      deleteBtn.innerHTML =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
+      deleteBtn.addEventListener("click", function () {
+        deleteIncomingFolder(folder.name);
+      });
+      row.appendChild(deleteBtn);
+
+      container.appendChild(row);
+    });
+  }
+
+  function deleteIncomingFolder(name) {
+    if (!window.confirm('Opravdu smazat adresář "' + name + '" a všechny fotky v něm z FTP?')) return;
+
+    var statusEl = document.getElementById("delete-folders-status");
+    statusEl.hidden = true;
+
+    adminFetch("api/incoming-delete.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folder: name }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          statusEl.hidden = false;
+          statusEl.className = "form-error";
+          statusEl.textContent = result.data.error || "Smazání adresáře selhalo";
+          return;
+        }
+        loadDeleteFolders();
+      });
+  }
+
+  function openDeleteFoldersModal() {
+    document.getElementById("delete-folders-status").hidden = true;
+    document.getElementById("delete-folders-modal").hidden = false;
+    loadDeleteFolders();
+  }
+
+  function closeDeleteFoldersModal() {
+    document.getElementById("delete-folders-modal").hidden = true;
+  }
+
+  function initDeleteFoldersModal() {
+    document.getElementById("delete-folders-btn").addEventListener("click", openDeleteFoldersModal);
+    document.getElementById("delete-folders-close").addEventListener("click", closeDeleteFoldersModal);
+    document.getElementById("delete-folders-modal").addEventListener("click", function (event) {
+      if (event.target.id === "delete-folders-modal") closeDeleteFoldersModal();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
@@ -1338,6 +1436,7 @@
     initEventPicker();
     initAdminLogin();
     initIncomingPicker();
+    initDeleteFoldersModal();
     loadPhotos();
     loadTags();
     loadEvents();

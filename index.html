@@ -55,14 +55,17 @@
 
 <div id="dropzone" class="dropzone" hidden>
   <p class="dropzone__text">Přetáhněte sem fotky, nebo</p>
-  <button id="pick-files" class="btn">vybrat fotky</button>
+  <div class="dropzone__actions">
+    <button id="pick-files" class="btn">vybrat fotky</button>
+    <button id="import-btn" class="btn">nahrát z adresáře</button>
+    <button id="delete-folders-btn" class="btn">smazat adresáře</button>
+  </div>
   <input id="file-input" type="file" accept="image/*" multiple hidden>
   <p id="upload-status" class="dropzone__status"></p>
 </div>
 
 <div id="admin-tools" class="admin-tools" hidden>
   <button id="manage-tags-btn" class="btn">spravovat tagy</button>
-  <button id="import-btn" class="btn">nahrát z adresáře</button>
 </div>
 
 <div id="bulk-actions" class="bulk-actions" hidden>
@@ -113,6 +116,11 @@
     <div id="incoming-list" class="events-list"></div>
     <p id="incoming-empty" class="filter-panel__empty" hidden>Ve složce actions/ nejsou žádné podadresáře s fotkami.</p>
 
+    <label class="checkbox-row">
+      <input id="incoming-delete-originals" type="checkbox" checked>
+      smazat originály z FTP po importu
+    </label>
+
     <div id="incoming-event-section" class="form-field" hidden>
       <span class="form-field__label">Akce</span>
       <div class="radio-row">
@@ -131,6 +139,18 @@
     <div class="modal__actions">
       <button id="incoming-cancel" class="btn">zrušit</button>
       <button id="incoming-import" class="btn btn--primary">importovat</button>
+    </div>
+  </div>
+</div>
+
+<div id="delete-folders-modal" class="modal" hidden>
+  <div class="modal__panel">
+    <h2 class="modal__title">Smazat adresáře</h2>
+    <div id="delete-folders-list" class="events-list"></div>
+    <p id="delete-folders-empty" class="filter-panel__empty" hidden>Ve složce actions/ nejsou žádné podadresáře.</p>
+    <p id="delete-folders-status" class="form-error" hidden></p>
+    <div class="modal__actions">
+      <button id="delete-folders-close" class="btn">zavřít</button>
     </div>
   </div>
 </div>

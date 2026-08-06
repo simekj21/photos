@@ -44,6 +44,7 @@ function save_events_list(string $eventsFile, array $events): bool {
 $input = json_decode(file_get_contents('php://input'), true);
 $folder = (string) ($input['folder'] ?? '');
 $eventMode = $input['eventMode'] ?? 'none';
+$deleteOriginals = !array_key_exists('deleteOriginals', (array) $input) || (bool) $input['deleteOriginals'];
 
 if ($folder === '' || basename($folder) !== $folder || $folder === '.' || $folder === '..') {
     json_response(['error' => 'Neplatný název složky'], 400);
@@ -117,12 +118,19 @@ foreach (scandir($realSourceDir) ?: [] as $entry) {
 
     $target = make_upload_target($uploadsRoot, ALLOWED_IMAGE_TYPES[$mimeType]);
 
-    if (!@rename($sourcePath, $target['originalDestPath'])) {
+    if ($deleteOriginals) {
+        if (!@rename($sourcePath, $target['originalDestPath'])) {
+            if (!@copy($sourcePath, $target['originalDestPath'])) {
+                $skipped[] = "$entry: přesun se nezdařil";
+                continue;
+            }
+            @unlink($sourcePath);
+        }
+    } else {
         if (!@copy($sourcePath, $target['originalDestPath'])) {
-            $skipped[] = "$entry: přesun se nezdařil";
+            $skipped[] = "$entry: kopírování se nezdařilo";
             continue;
         }
-        @unlink($sourcePath);
     }
 
     $dims = finalize_uploaded_image($target['originalDestPath'], $mimeType, $target['thumbDestPath']);

@@ -100,6 +100,13 @@ body {
   color: var(--text-muted);
 }
 
+.dropzone__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 .dropzone__status {
   margin: 12px 0 0;
   font-size: 14px;
@@ -417,6 +424,15 @@ body {
   gap: 16px;
   font-size: 13px;
   margin-bottom: 4px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 12px;
 }
 
 .radio-row label {
