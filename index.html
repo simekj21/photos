@@ -14,6 +14,14 @@
   </div>
   <div class="topbar__actions">
     <div class="filter-wrap">
+      <button id="tile-size-toggle" class="icon-btn" aria-label="Velikost dlaždic" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+      <div id="tile-size-panel" class="filter-panel tile-size-panel" hidden>
+        <input id="tile-size-slider" type="range" min="40" max="220" value="140" class="tile-size-slider">
+      </div>
+    </div>
+    <div class="filter-wrap">
       <button id="filter-toggle" class="icon-btn" aria-label="Filtrovat podle tagů" aria-expanded="false">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg>
       </button>
@@ -32,14 +40,6 @@
         <p id="events-empty" class="filter-panel__empty" hidden>Zatím žádné akce.</p>
         <button id="events-filter-clear" class="btn">zrušit filtr</button>
         <button id="events-add-btn" class="btn" hidden>+ přidat akci</button>
-      </div>
-    </div>
-    <div class="filter-wrap">
-      <button id="tile-size-toggle" class="icon-btn" aria-label="Velikost dlaždic" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      </button>
-      <div id="tile-size-panel" class="filter-panel tile-size-panel" hidden>
-        <input id="tile-size-slider" type="range" min="40" max="220" value="140" class="tile-size-slider">
       </div>
     </div>
     <button id="admin-toggle" class="icon-btn" aria-label="Administrátorský režim" aria-expanded="false">
