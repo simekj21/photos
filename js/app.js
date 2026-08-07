@@ -817,6 +817,19 @@
     });
   }
 
+  function clampPanelToViewport(panel) {
+    panel.style.transform = "";
+    var margin = 8;
+    var rect = panel.getBoundingClientRect();
+    var overflowRight = rect.right - (window.innerWidth - margin);
+    var overflowLeft = margin - rect.left;
+    if (overflowRight > 0) {
+      panel.style.transform = "translateX(-" + overflowRight + "px)";
+    } else if (overflowLeft > 0) {
+      panel.style.transform = "translateX(" + overflowLeft + "px)";
+    }
+  }
+
   function initFilter() {
     var filterToggle = document.getElementById("filter-toggle");
     var filterPanel = document.getElementById("filter-panel");
@@ -827,6 +840,7 @@
       var willOpen = filterPanel.hidden;
       if (willOpen) closeOtherFilterPanels(filterPanel);
       filterPanel.hidden = !willOpen;
+      if (willOpen) clampPanelToViewport(filterPanel);
       filterToggle.setAttribute("aria-expanded", String(willOpen));
     });
 
@@ -865,6 +879,7 @@
       var willOpen = panel.hidden;
       if (willOpen) closeOtherFilterPanels(panel);
       panel.hidden = !willOpen;
+      if (willOpen) clampPanelToViewport(panel);
       toggle.setAttribute("aria-expanded", String(willOpen));
     });
 
@@ -1381,6 +1396,7 @@
       var willOpen = eventsPanel.hidden;
       if (willOpen) closeOtherFilterPanels(eventsPanel);
       eventsPanel.hidden = !willOpen;
+      if (willOpen) clampPanelToViewport(eventsPanel);
       eventsToggle.setAttribute("aria-expanded", String(willOpen));
     });
 
@@ -1407,14 +1423,9 @@
   }
 
   function getUsedCountries() {
-    var seen = {};
-    var list = [];
-    currentPhotos.forEach(function (photo) {
-      var code = photo.countryCode;
-      if (code && !seen[code]) {
-        seen[code] = true;
-        list.push({ code: code, name: getCountryName(code) });
-      }
+    var counts = getCountryPhotoCounts();
+    var list = Object.keys(counts).map(function (code) {
+      return { code: code, name: getCountryName(code), count: counts[code] };
     });
     list.sort(function (a, b) {
       return a.name.localeCompare(b.name, "cs");
@@ -1435,7 +1446,7 @@
       btn.type = "button";
       btn.className =
         "event-row__select" + (activeCountryFilterCode === country.code ? " event-row__select--active" : "");
-      btn.textContent = country.name;
+      btn.textContent = country.name + " (" + country.count + ")";
       btn.addEventListener("click", function (event) {
         event.stopPropagation();
         activeCountryFilterCode = activeCountryFilterCode === country.code ? null : country.code;
@@ -1457,6 +1468,7 @@
       var willOpen = panel.hidden;
       if (willOpen) closeOtherFilterPanels(panel);
       panel.hidden = !willOpen;
+      if (willOpen) clampPanelToViewport(panel);
       toggle.setAttribute("aria-expanded", String(willOpen));
     });
 
