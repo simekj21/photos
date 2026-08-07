@@ -107,10 +107,11 @@
   function applyTileSizeSliderBounds() {
     var slider = document.getElementById("tile-size-slider");
     var defaultSize = computeFillTileSize(currentPhotos.length);
-    slider.max = String(defaultSize);
+    var maxSize = Math.max(defaultSize * 2, 400);
+    slider.max = String(maxSize);
 
     var saved = localStorage.getItem(TILE_SIZE_KEY);
-    var value = saved ? Math.min(parseInt(saved, 10), defaultSize) : defaultSize;
+    var value = saved ? Math.min(parseInt(saved, 10), maxSize) : defaultSize;
     slider.value = String(value);
     applyTileSize(value);
   }
