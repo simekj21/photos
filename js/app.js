@@ -99,7 +99,9 @@
     }
 
     var bestCols = fitting ? fitting.cols : overflowing.cols;
-    var finalTileSize = Math.floor((containerWidth - gap * (bestCols - 1)) / bestCols);
+    // Floor (not round) and shave off a couple more px as slack, so real-device
+    // subpixel/scrollbar rounding differences can't push the grid past the edge.
+    var finalTileSize = Math.floor((containerWidth - gap * (bestCols - 1)) / bestCols) - 2;
 
     return Math.max(AUTO_FILL_FLOOR_TILE_SIZE, finalTileSize);
   }
@@ -1557,6 +1559,7 @@
     document.getElementById("map-toggle").classList.remove("icon-btn--active");
     document.getElementById("map-toggle").setAttribute("aria-expanded", "false");
     renderActiveFiltersBar();
+    if (!adminMode) applyTileSizeSliderBounds();
   }
 
   function initMapView() {
