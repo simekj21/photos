@@ -701,3 +701,58 @@ body {
 .lightbox__nav--next {
   right: 16px;
 }
+
+.map-view[hidden] {
+  display: none;
+}
+
+.map-view {
+  padding: 16px 24px 8px;
+}
+
+.map-view__header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.map-view__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.map-view__hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.world-map {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.world-map svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.world-map__country {
+  fill: var(--border);
+  stroke: var(--bg);
+  stroke-width: 0.5;
+}
+
+.world-map__country--active {
+  fill: #378ada;
+  cursor: pointer;
+}
+
+.world-map__country--active:hover {
+  fill: #2a6fb0;
+}
+
+.world-map__country--selected {
+  fill: #c62828;
+}

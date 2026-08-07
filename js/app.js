@@ -1474,6 +1474,89 @@
     });
   }
 
+  function getCountryPhotoCounts() {
+    var counts = {};
+    currentPhotos.forEach(function (photo) {
+      if (!photo.countryCode) return;
+      counts[photo.countryCode] = (counts[photo.countryCode] || 0) + 1;
+    });
+    return counts;
+  }
+
+  function buildWorldMap() {
+    var container = document.getElementById("world-map");
+    var data = window.WORLD_MAP;
+    var svgNs = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(svgNs, "svg");
+    svg.setAttribute("viewBox", "0 0 " + data.width + " " + data.height);
+
+    Object.keys(data.paths).forEach(function (code) {
+      var path = document.createElementNS(svgNs, "path");
+      path.setAttribute("d", data.paths[code]);
+      path.setAttribute("class", "world-map__country");
+      path.setAttribute("data-code", code);
+      var title = document.createElementNS(svgNs, "title");
+      path.appendChild(title);
+      svg.appendChild(path);
+    });
+
+    svg.addEventListener("click", function (event) {
+      var code = event.target.getAttribute("data-code");
+      if (!code || !event.target.classList.contains("world-map__country--active")) return;
+      applyExclusiveFilter("country", activeCountryFilterCode === code ? null : code);
+      closeMapView();
+    });
+
+    container.innerHTML = "";
+    container.appendChild(svg);
+  }
+
+  function refreshWorldMapHighlights() {
+    var counts = getCountryPhotoCounts();
+    var paths = document.querySelectorAll("#world-map .world-map__country");
+    paths.forEach(function (path) {
+      var code = path.getAttribute("data-code");
+      var count = counts[code] || 0;
+      var isActive = count > 0;
+      path.classList.toggle("world-map__country--active", isActive);
+      path.classList.toggle("world-map__country--selected", activeCountryFilterCode === code);
+      var title = path.querySelector("title");
+      title.textContent = isActive
+        ? getCountryName(code) + " (" + count + (count === 1 ? " fotka" : count < 5 ? " fotky" : " fotek") + ")"
+        : getCountryName(code);
+    });
+  }
+
+  function openMapView() {
+    closeOtherFilterPanels({});
+    if (!document.getElementById("world-map").firstChild) buildWorldMap();
+    refreshWorldMapHighlights();
+    document.getElementById("gallery").hidden = true;
+    document.getElementById("active-filters-bar").hidden = true;
+    document.getElementById("map-view").hidden = false;
+    document.getElementById("map-toggle").classList.add("icon-btn--active");
+    document.getElementById("map-toggle").setAttribute("aria-expanded", "true");
+  }
+
+  function closeMapView() {
+    document.getElementById("map-view").hidden = true;
+    document.getElementById("gallery").hidden = false;
+    document.getElementById("map-toggle").classList.remove("icon-btn--active");
+    document.getElementById("map-toggle").setAttribute("aria-expanded", "false");
+    renderActiveFiltersBar();
+  }
+
+  function initMapView() {
+    document.getElementById("map-toggle").addEventListener("click", function () {
+      var isOpen = !document.getElementById("map-view").hidden;
+      if (isOpen) {
+        closeMapView();
+      } else {
+        openMapView();
+      }
+    });
+  }
+
   function renderCountryPickerList(query) {
     var container = document.getElementById("country-picker-list");
     container.innerHTML = "";
@@ -1881,6 +1964,7 @@
     initEventEditor();
     initEventPicker();
     initCountryFilterPanel();
+    initMapView();
     initCountryPicker();
     initBulkCountry();
     initActiveFiltersBar();
