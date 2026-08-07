@@ -221,6 +221,7 @@
         }
         renderCountryFilterList();
         refreshDisplay();
+        if (!document.getElementById("map-view").hidden) refreshWorldMapHighlights();
       })
       .catch(function () {
         document.getElementById("gallery").innerHTML = "";
@@ -1965,6 +1966,7 @@
     initEventPicker();
     initCountryFilterPanel();
     initMapView();
+    openMapView();
     initCountryPicker();
     initBulkCountry();
     initActiveFiltersBar();
