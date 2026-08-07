@@ -801,13 +801,30 @@
     });
   }
 
+  var filterPanelToggles = [];
+
+  function registerFilterPanelToggle(toggle, panel) {
+    filterPanelToggles.push({ toggle: toggle, panel: panel });
+  }
+
+  function closeOtherFilterPanels(currentPanel) {
+    filterPanelToggles.forEach(function (entry) {
+      if (entry.panel !== currentPanel && !entry.panel.hidden) {
+        entry.panel.hidden = true;
+        entry.toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
   function initFilter() {
     var filterToggle = document.getElementById("filter-toggle");
     var filterPanel = document.getElementById("filter-panel");
+    registerFilterPanelToggle(filterToggle, filterPanel);
 
     filterToggle.addEventListener("click", function (event) {
       event.stopPropagation();
       var willOpen = filterPanel.hidden;
+      if (willOpen) closeOtherFilterPanels(filterPanel);
       filterPanel.hidden = !willOpen;
       filterToggle.setAttribute("aria-expanded", String(willOpen));
     });
@@ -832,6 +849,7 @@
     var toggle = document.getElementById("tile-size-toggle");
     var panel = document.getElementById("tile-size-panel");
     var slider = document.getElementById("tile-size-slider");
+    registerFilterPanelToggle(toggle, panel);
 
     applyTileSizeSliderBounds();
 
@@ -844,6 +862,7 @@
     toggle.addEventListener("click", function (event) {
       event.stopPropagation();
       var willOpen = panel.hidden;
+      if (willOpen) closeOtherFilterPanels(panel);
       panel.hidden = !willOpen;
       toggle.setAttribute("aria-expanded", String(willOpen));
     });
@@ -1354,10 +1373,12 @@
   function initEventsPanel() {
     var eventsToggle = document.getElementById("events-toggle");
     var eventsPanel = document.getElementById("events-panel");
+    registerFilterPanelToggle(eventsToggle, eventsPanel);
 
     eventsToggle.addEventListener("click", function (event) {
       event.stopPropagation();
       var willOpen = eventsPanel.hidden;
+      if (willOpen) closeOtherFilterPanels(eventsPanel);
       eventsPanel.hidden = !willOpen;
       eventsToggle.setAttribute("aria-expanded", String(willOpen));
     });
@@ -1428,10 +1449,12 @@
   function initCountryFilterPanel() {
     var toggle = document.getElementById("country-filter-toggle");
     var panel = document.getElementById("country-filter-panel");
+    registerFilterPanelToggle(toggle, panel);
 
     toggle.addEventListener("click", function (event) {
       event.stopPropagation();
       var willOpen = panel.hidden;
+      if (willOpen) closeOtherFilterPanels(panel);
       panel.hidden = !willOpen;
       toggle.setAttribute("aria-expanded", String(willOpen));
     });
