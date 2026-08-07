@@ -27,8 +27,14 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
