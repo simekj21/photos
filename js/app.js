@@ -1128,9 +1128,19 @@
     return start + " – " + formatEventDate(endDate);
   }
 
+  function getEventPhotoCounts() {
+    var counts = {};
+    currentPhotos.forEach(function (photo) {
+      if (!photo.eventId) return;
+      counts[photo.eventId] = (counts[photo.eventId] || 0) + 1;
+    });
+    return counts;
+  }
+
   function renderEventsList() {
     var container = document.getElementById("events-list");
     var empty = document.getElementById("events-empty");
+    var counts = getEventPhotoCounts();
     container.innerHTML = "";
     empty.hidden = allEvents.length > 0;
     container.hidden = allEvents.length === 0;
@@ -1144,7 +1154,7 @@
       selectBtn.className = "event-row__select" + (activeEventFilterId === evt.id ? " event-row__select--active" : "");
       selectBtn.innerHTML =
         '<span class="event-row__name"></span><span class="event-row__dates"></span>';
-      selectBtn.querySelector(".event-row__name").textContent = evt.name;
+      selectBtn.querySelector(".event-row__name").textContent = evt.name + " (" + (counts[evt.id] || 0) + ")";
       selectBtn.querySelector(".event-row__dates").textContent = formatEventRange(evt.startDate, evt.endDate);
       selectBtn.addEventListener("click", function (e) {
         e.stopPropagation();
