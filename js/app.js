@@ -1421,12 +1421,6 @@
       }
     });
 
-    document.getElementById("events-filter-clear").addEventListener("click", function () {
-      activeEventFilterId = null;
-      renderEventsList();
-      renderActiveFiltersBar();
-      refreshDisplay();
-    });
   }
 
   function getCountryName(code) {
@@ -1495,12 +1489,6 @@
       }
     });
 
-    document.getElementById("country-filter-clear").addEventListener("click", function () {
-      activeCountryFilterCode = null;
-      renderCountryFilterList();
-      renderActiveFiltersBar();
-      refreshDisplay();
-    });
   }
 
   function getCountryPhotoCounts() {
