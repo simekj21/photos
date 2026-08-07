@@ -277,6 +277,102 @@
     renderGallery(getFilteredPhotos());
   }
 
+  function applyExclusiveFilter(type, value) {
+    activeFilterTagIds = new Set(type === "tag" ? [value] : []);
+    activeEventFilterId = type === "event" ? value : null;
+    activeCountryFilterCode = type === "country" ? value : null;
+
+    document.getElementById("filter-toggle").classList.toggle("icon-btn--active", activeFilterTagIds.size > 0);
+    renderFilterChips();
+    renderEventsList();
+    renderCountryFilterList();
+    renderActiveFiltersBar();
+    closeLightbox();
+    refreshDisplay();
+  }
+
+  function resetAllFilters() {
+    activeFilterTagIds = new Set();
+    activeEventFilterId = null;
+    activeCountryFilterCode = null;
+
+    document.getElementById("filter-toggle").classList.remove("icon-btn--active");
+    renderFilterChips();
+    renderEventsList();
+    renderCountryFilterList();
+    renderActiveFiltersBar();
+    refreshDisplay();
+  }
+
+  function renderActiveFiltersBar() {
+    var bar = document.getElementById("active-filters-bar");
+    var container = document.getElementById("active-filters-chips");
+    container.innerHTML = "";
+
+    var chips = [];
+
+    activeFilterTagIds.forEach(function (tagId) {
+      var tag = allTags.filter(function (t) {
+        return t.id === tagId;
+      })[0];
+      if (!tag) return;
+      chips.push({
+        label: tag.name,
+        onRemove: function () {
+          activeFilterTagIds.delete(tagId);
+          document.getElementById("filter-toggle").classList.toggle("icon-btn--active", activeFilterTagIds.size > 0);
+          renderFilterChips();
+          renderActiveFiltersBar();
+          refreshDisplay();
+        },
+      });
+    });
+
+    if (activeEventFilterId) {
+      var event = allEvents.filter(function (e) {
+        return e.id === activeEventFilterId;
+      })[0];
+      if (event) {
+        chips.push({
+          label: event.name,
+          onRemove: function () {
+            activeEventFilterId = null;
+            renderEventsList();
+            renderActiveFiltersBar();
+            refreshDisplay();
+          },
+        });
+      }
+    }
+
+    if (activeCountryFilterCode) {
+      chips.push({
+        label: getCountryName(activeCountryFilterCode),
+        onRemove: function () {
+          activeCountryFilterCode = null;
+          renderCountryFilterList();
+          renderActiveFiltersBar();
+          refreshDisplay();
+        },
+      });
+    }
+
+    bar.hidden = chips.length === 0;
+
+    chips.forEach(function (chip) {
+      var chipEl = document.createElement("button");
+      chipEl.type = "button";
+      chipEl.className = "tag-chip tag-chip--active";
+      chipEl.textContent = chip.label + " ×";
+      chipEl.addEventListener("click", chip.onRemove);
+      container.appendChild(chipEl);
+    });
+  }
+
+  function initActiveFiltersBar() {
+    document.getElementById("active-filters-reset").addEventListener("click", resetAllFilters);
+  }
+
   function renderGallery(photos) {
     var gallery = document.getElementById("gallery");
     gallery.innerHTML = "";
@@ -463,6 +559,58 @@
   function updateLightboxImage() {
     var photo = lightboxState.photos[lightboxState.index];
     document.getElementById("lb-image").src = photo.originalUrl;
+    renderLightboxMeta(photo);
+  }
+
+  function renderLightboxMeta(photo) {
+    var eventBtn = document.getElementById("lb-event");
+    var countryBtn = document.getElementById("lb-country");
+    var tagsContainer = document.getElementById("lb-tags");
+
+    var event = photo.eventId
+      ? allEvents.filter(function (e) {
+          return e.id === photo.eventId;
+        })[0]
+      : null;
+
+    if (event) {
+      eventBtn.textContent = event.name;
+      eventBtn.hidden = false;
+      eventBtn.onclick = function () {
+        applyExclusiveFilter("event", event.id);
+      };
+    } else {
+      eventBtn.hidden = true;
+      eventBtn.onclick = null;
+    }
+
+    if (photo.countryCode) {
+      countryBtn.textContent = getCountryName(photo.countryCode);
+      countryBtn.hidden = false;
+      countryBtn.onclick = function () {
+        applyExclusiveFilter("country", photo.countryCode);
+      };
+    } else {
+      countryBtn.hidden = true;
+      countryBtn.onclick = null;
+    }
+
+    tagsContainer.innerHTML = "";
+    (photo.tagIds || []).forEach(function (tagId) {
+      var tag = allTags.filter(function (t) {
+        return t.id === tagId;
+      })[0];
+      if (!tag) return;
+
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "lightbox__tag";
+      chip.textContent = tag.name;
+      chip.addEventListener("click", function () {
+        applyExclusiveFilter("tag", tagId);
+      });
+      tagsContainer.appendChild(chip);
+    });
   }
 
   function initLightboxControls() {
@@ -646,6 +794,7 @@
         }
         document.getElementById("filter-toggle").classList.toggle("icon-btn--active", activeFilterTagIds.size > 0);
         renderFilterChips();
+        renderActiveFiltersBar();
         refreshDisplay();
       });
       container.appendChild(chip);
@@ -674,6 +823,7 @@
       activeFilterTagIds.clear();
       filterToggle.classList.remove("icon-btn--active");
       renderFilterChips();
+      renderActiveFiltersBar();
       refreshDisplay();
     });
   }
@@ -881,6 +1031,7 @@
             activeFilterTagIds.delete(tag.id);
             renderTagManagerList();
             renderFilterChips();
+            renderActiveFiltersBar();
             loadPhotos();
           });
       });
@@ -962,6 +1113,7 @@
         e.stopPropagation();
         activeEventFilterId = activeEventFilterId === evt.id ? null : evt.id;
         renderEventsList();
+        renderActiveFiltersBar();
         refreshDisplay();
       });
       row.appendChild(selectBtn);
@@ -1030,6 +1182,7 @@
           return;
         }
         if (activeEventFilterId === id) activeEventFilterId = null;
+        renderActiveFiltersBar();
         loadEvents();
         loadPhotos();
       });
@@ -1219,6 +1372,7 @@
     document.getElementById("events-filter-clear").addEventListener("click", function () {
       activeEventFilterId = null;
       renderEventsList();
+      renderActiveFiltersBar();
       refreshDisplay();
     });
   }
@@ -1264,6 +1418,7 @@
         event.stopPropagation();
         activeCountryFilterCode = activeCountryFilterCode === country.code ? null : country.code;
         renderCountryFilterList();
+        renderActiveFiltersBar();
         refreshDisplay();
       });
       container.appendChild(btn);
@@ -1291,6 +1446,7 @@
     document.getElementById("country-filter-clear").addEventListener("click", function () {
       activeCountryFilterCode = null;
       renderCountryFilterList();
+      renderActiveFiltersBar();
       refreshDisplay();
     });
   }
@@ -1704,6 +1860,7 @@
     initCountryFilterPanel();
     initCountryPicker();
     initBulkCountry();
+    initActiveFiltersBar();
     initAdminLogin();
     initIncomingPicker();
     initDeleteFoldersModal();

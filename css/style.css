@@ -484,6 +484,36 @@ body {
   margin-right: auto;
 }
 
+.active-filters-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 24px 0;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.active-filters-bar[hidden] {
+  display: none;
+}
+
+.active-filters-bar__label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.active-filters-bar .tag-chips {
+  flex: 1;
+}
+
+#active-filters-reset {
+  margin-left: auto;
+}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--tile-size), 1fr));
@@ -563,10 +593,75 @@ body {
   display: none;
 }
 
-.lightbox__image {
+.lightbox__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   max-width: 85vw;
   max-height: 85vh;
+}
+
+.lightbox__meta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 28px;
+}
+
+.lightbox__meta-btn {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lightbox__meta-btn:hover {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lightbox__meta-btn[hidden] {
+  display: none;
+}
+
+.lightbox__meta-btn--country {
+  margin-left: auto;
+}
+
+.lightbox__image {
+  max-width: 85vw;
+  max-height: 65vh;
   border-radius: 4px;
+  display: block;
+}
+
+.lightbox__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 85vw;
+}
+
+.lightbox__tag {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lightbox__tag:hover {
+  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .lightbox__close {
