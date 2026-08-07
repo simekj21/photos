@@ -17,11 +17,13 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     </button>
     <div class="filter-wrap">
-      <button id="tile-size-toggle" class="icon-btn" aria-label="Velikost dlaždic" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <button id="country-filter-toggle" class="icon-btn" aria-label="Filtrovat podle země" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       </button>
-      <div id="tile-size-panel" class="filter-panel tile-size-panel" hidden>
-        <input id="tile-size-slider" type="range" min="10" max="220" value="140" class="tile-size-slider">
+      <div id="country-filter-panel" class="filter-panel events-panel" hidden>
+        <div id="country-filter-list" class="events-list"></div>
+        <p id="country-filter-empty" class="filter-panel__empty" hidden>Zatím žádné fotky se zemí.</p>
+        <button id="country-filter-clear" class="btn">zrušit filtr</button>
       </div>
     </div>
     <div class="filter-wrap">
@@ -45,16 +47,6 @@
         <button id="events-add-btn" class="btn" hidden>+ přidat akci</button>
       </div>
     </div>
-    <div class="filter-wrap">
-      <button id="country-filter-toggle" class="icon-btn" aria-label="Filtrovat podle země" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      </button>
-      <div id="country-filter-panel" class="filter-panel events-panel" hidden>
-        <div id="country-filter-list" class="events-list"></div>
-        <p id="country-filter-empty" class="filter-panel__empty" hidden>Zatím žádné fotky se zemí.</p>
-        <button id="country-filter-clear" class="btn">zrušit filtr</button>
-      </div>
-    </div>
     <button id="admin-toggle" class="icon-btn" aria-label="Administrátorský režim" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -63,6 +55,14 @@
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
       </svg>
     </button>
+    <div class="filter-wrap">
+      <button id="tile-size-toggle" class="icon-btn" aria-label="Velikost dlaždic" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+      <div id="tile-size-panel" class="filter-panel tile-size-panel" hidden>
+        <input id="tile-size-slider" type="range" min="10" max="220" value="140" class="tile-size-slider">
+      </div>
+    </div>
   </div>
 </header>
 
