@@ -2,8 +2,8 @@
   "use strict";
 
   var THEME_KEY = "theme";
-  var TILE_SIZE_KEY = "tileSize";
   var ADMIN_TOKEN_KEY = "adminToken";
+  var manualTileSize = null;
   var adminMode = false;
   var adminToken = localStorage.getItem(ADMIN_TOKEN_KEY) || null;
   var selectedIds = new Set();
@@ -110,8 +110,7 @@
     var maxSize = Math.max(defaultSize * 2, 400);
     slider.max = String(maxSize);
 
-    var saved = localStorage.getItem(TILE_SIZE_KEY);
-    var value = saved ? Math.min(parseInt(saved, 10), maxSize) : defaultSize;
+    var value = manualTileSize !== null ? Math.min(manualTileSize, maxSize) : defaultSize;
     slider.value = String(value);
     applyTileSize(value);
   }
@@ -838,7 +837,7 @@
 
     slider.addEventListener("input", function () {
       var value = parseInt(slider.value, 10);
-      localStorage.setItem(TILE_SIZE_KEY, String(value));
+      manualTileSize = value;
       applyTileSize(value);
     });
 
