@@ -1152,6 +1152,8 @@
         renderEventsList();
         renderActiveFiltersBar();
         refreshDisplay();
+        document.getElementById("events-panel").hidden = true;
+        document.getElementById("events-toggle").setAttribute("aria-expanded", "false");
       });
       row.appendChild(selectBtn);
 
@@ -1455,6 +1457,8 @@
         renderCountryFilterList();
         renderActiveFiltersBar();
         refreshDisplay();
+        document.getElementById("country-filter-panel").hidden = true;
+        document.getElementById("country-filter-toggle").setAttribute("aria-expanded", "false");
       });
       container.appendChild(btn);
     });
